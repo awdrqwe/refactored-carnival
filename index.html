@@ -40,6 +40,254 @@
     flex-direction: column;
   }
 
+  /* ===== 登录遮罩层 ===== */
+  .login-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, #0f1d40 0%, #1a3a6b 40%, #1a56db 100%);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-overlay.hidden { display: none; }
+  .login-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 360px;
+    max-width: 92vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  .login-box h2 {
+    font-size: 1.3rem;
+    margin-bottom: 6px;
+    color: #1e293b;
+  }
+  .login-box .login-sub {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 28px;
+  }
+  .login-box .form-group {
+    text-align: left;
+    margin-bottom: 16px;
+  }
+  .login-box .form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .login-box .form-group input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    outline: none;
+    transition: all 0.2s;
+    background: #f8fafc;
+  }
+  .login-box .form-group input:focus {
+    border-color: #1a56db;
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    background: #fff;
+  }
+  .login-btn {
+    width: 100%;
+    height: 44px;
+    background: linear-gradient(135deg, #1a56db, #3b82f6);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .login-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,86,219,0.3); }
+  .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .login-error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 10px;
+    display: none;
+  }
+  .login-error.show { display: block; }
+
+  /* ===== 用户信息栏 ===== */
+  .user-bar {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 18px;
+  }
+  .user-bar-inner {
+    background: var(--card-bg);
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    border-top: none;
+    font-size: 0.82rem;
+  }
+  .user-bar-inner .user-info {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .user-bar-inner .user-role-badge {
+    font-size: 0.7rem;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .role-super { background: #fef3c7; color: #92400e; }
+  .role-editor { background: #dbeafe; color: #1e40af; }
+  .role-viewer { background: #f1f5f9; color: #475569; }
+  .user-bar-inner .btn-sm {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 0.76rem;
+  }
+
+  /* ===== 用户管理面板 ===== */
+  .user-mgmt-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10001;
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+  .user-mgmt-overlay.show { display: flex; }
+  .user-mgmt-panel {
+    width: 520px;
+    max-width: 94vw;
+    max-height: 80vh;
+    background: #fff;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  .user-mgmt-header {
+    background: linear-gradient(135deg, #0f1d40, #1a56db);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .user-mgmt-header h3 { font-size: 1rem; font-weight: 700; }
+  .user-mgmt-close {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .user-mgmt-close:hover { background: rgba(255,255,255,0.3); }
+  .user-mgmt-body {
+    flex: 1; overflow-y: auto;
+    padding: 16px 20px;
+  }
+  .user-mgmt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+  .user-mgmt-table th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid #e2e8f0;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.78rem;
+  }
+  .user-mgmt-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .user-mgmt-table .del-btn {
+    background: none;
+    border: 1px solid #fecaca;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 0.76rem;
+    padding: 2px 10px;
+    border-radius: 4px;
+  }
+  .user-mgmt-table .del-btn:hover { background: #fef2f2; }
+  .user-mgmt-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+  }
+  .user-mgmt-footer .btn-sm { height: 34px; }
+
+  /* ===== 添加用户弹窗 ===== */
+  .add-user-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10002;
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+  .add-user-overlay.show { display: flex; }
+  .add-user-panel {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 28px 30px;
+    width: 380px;
+    max-width: 92vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .add-user-panel h3 { font-size: 1.05rem; margin-bottom: 20px; }
+  .add-user-panel .form-group { margin-bottom: 14px; }
+  .add-user-panel .form-group label { font-size: 0.82rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 5px; }
+  .add-user-panel .form-group input,
+  .add-user-panel .form-group select {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+  }
+  .add-user-panel .form-group input:focus,
+  .add-user-panel .form-group select:focus { border-color: var(--primary); }
+  .add-user-actions { display: flex; gap: 8px; margin-top: 24px; justify-content: flex-end; }
+
+  @media (max-width: 768px) {
+    .login-box { padding: 30px 24px; }
+    .user-bar-inner { padding: 8px 12px; font-size: 0.76rem; }
+    .user-mgmt-panel { max-height: 90vh; }
+    .user-mgmt-body { padding: 12px; }
+    .user-mgmt-table { font-size: 0.76rem; }
+    .user-mgmt-table th, .user-mgmt-table td { padding: 6px 6px; }
+  }
+
   /* ===== 品牌区域 ===== */
   .brand {
     background: linear-gradient(135deg, #0f1d40 0%, #1a3a6b 30%, #1a56db 70%, #3b82f6 100%);
@@ -1041,11 +1289,41 @@
 </head>
 <body>
 
+<!-- 登录遮罩层 -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>停车场管理系统</h2>
+    <p class="login-sub">请输入账号和密码</p>
+    <div class="form-group">
+      <label>用户名</label>
+      <input type="text" id="loginUsername" placeholder="请输入用户名" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">登 录</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
 <div class="brand">
   <div class="brand-company">金达资讯科技技术有限公司</div>
   <div class="brand-title">停车场信息资料登记系统</div>
   <div class="brand-subtitle">多停车场管理 &middot; 收费处 &amp; 出入口信息采集</div>
-  <div class="brand-version">v1.25</div>
+  <div class="brand-version">v1.26</div>
+</div>
+
+<!-- 用户信息栏 -->
+<div class="user-bar" id="userBar" style="display:none;">
+  <div class="user-bar-inner">
+    <div class="user-info">
+      <span id="userDisplay"></span>
+      <span class="user-role-badge" id="userRoleBadge"></span>
+    </div>
+    <button class="btn btn-sm btn-outline" id="userMgmtBtn" onclick="openUserMgmt()" style="display:none;">用户管理</button>
+    <button class="btn btn-sm btn-cancel" onclick="doLogout()">退出登录</button>
+  </div>
 </div>
 
 <div class="progress-section" id="progressSection">
@@ -1320,11 +1598,359 @@
 (function() {
   'use strict';
 
+  // ===== 用户认证系统 =====
+  var SUPABASE_URL = 'https://unulmtdacleljqtuggfp.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_v1H-PJyUUkuu9njdFCOXWg_SzdEctso';
+  var AUTH_KEY = 'parking_auth_v1';
+  var currentUser = null; // { username, role }
+
+  // SHA-256 哈希（Web Crypto API）
+  async function sha256(message) {
+    var encoder = new TextEncoder();
+    var data = encoder.encode(message);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  // 从 localStorage 恢复登录态
+  function restoreAuth() {
+    try {
+      var raw = localStorage.getItem(AUTH_KEY);
+      if (raw) {
+        currentUser = JSON.parse(raw);
+        return true;
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  function saveAuth() {
+    if (currentUser) {
+      localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem(AUTH_KEY);
+    }
+  }
+
+  // 显示/隐藏登录遮罩
+  function showLoginOverlay() {
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('userBar').style.display = 'none';
+  }
+
+  function hideLoginOverlay() {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('userBar').style.display = 'block';
+    updateUserBar();
+  }
+
+  // 更新用户信息栏
+  function updateUserBar() {
+    if (!currentUser) return;
+    document.getElementById('userDisplay').textContent = currentUser.username;
+    var badge = document.getElementById('userRoleBadge');
+    var roleLabel = '';
+    badge.className = 'user-role-badge';
+    if (currentUser.role === 'super_admin') { roleLabel = '超级管理员'; badge.className += ' role-super'; }
+    else if (currentUser.role === 'editor') { roleLabel = '编辑者'; badge.className += ' role-editor'; }
+    else { roleLabel = '查看者'; badge.className += ' role-viewer'; }
+    badge.textContent = roleLabel;
+
+    // 超级管理员可见用户管理按钮
+    document.getElementById('userMgmtBtn').style.display = (currentUser.role === 'super_admin') ? '' : 'none';
+
+    applyPermissions();
+  }
+
+  // 根据角色控制 UI 权限
+  function applyPermissions() {
+    var role = currentUser ? currentUser.role : 'viewer';
+    var isViewer = (role === 'viewer');
+    var isSuperAdmin = (role === 'super_admin');
+    var isEditor = (role === 'editor');
+
+    // 需要隐藏的元素选择器：新增/编辑/删除/锁定/导出/导入/重置等
+    var adminOnlySelectors = [
+      '.lot-manager .btn-sm-primary',  // 新增按钮
+      '.lot-manager .btn-sm-outline',  // 复制按钮
+      '#lotLockBtn',                    // 锁定按钮
+    ];
+
+    // viewer 隐藏所有编辑相关按钮和功能
+    var editSelectors = adminOnlySelectors.concat([
+      '.btn-del',                       // 删除按钮
+      '.btn-success',                   // 保存/导出等
+      '.btn-outline',                   // 导出PDF等
+      '.btn-primary',                   // 新增停车场等
+      '.btn-danger',                    // 重置等
+      '.stepper-btn',                   // 数量步进按钮
+      '.counter-custom-add-row',        // 自定义设备添加行
+      '#undoBar',                       // 撤销栏
+      '#card-map .map-toolbar',         // 地图工具栏
+      '#btnMergeSmart',                 // 智能合并按钮
+      '#btnOverwriteAll',               // 覆盖导入按钮
+    ]);
+
+    if (isViewer) {
+      // 禁用所有表单输入
+      var allInputs = document.querySelectorAll('input, select, textarea, button.stepper-btn');
+      allInputs.forEach(function(el) {
+        if (el.id === 'lotSearch' || el.id === 'loginUsername' || el.id === 'loginPassword') return;
+        if (el.closest('#loginOverlay') || el.closest('#userBar')) return;
+        el.disabled = true;
+        el.style.opacity = '0.7';
+      });
+
+      // 隐藏操作按钮区域
+      var actionsEls = document.querySelectorAll('.actions, .lot-manager .btn-sm-primary, .lot-manager .btn-sm-outline, #lotLockBtn');
+      actionsEls.forEach(function(el) { el.style.display = 'none'; });
+
+      // 隐藏导入相关
+      var importBtn = document.querySelector('.btn-outline[onclick*="importJSON"]');
+      if (importBtn) importBtn.style.display = 'none';
+      var exportExcelBtn = document.querySelector('.btn-outline[onclick*="exportExcel"]');
+      if (exportExcelBtn) exportExcelBtn.style.display = 'none';
+      var previewBtn = document.querySelector('.btn-outline[onclick*="previewData"]');
+      if (previewBtn) previewBtn.style.display = 'none';
+      var exportPdfBtn = document.querySelector('.btn-outline[onclick*="exportPDF"]');
+      if (exportPdfBtn) exportPdfBtn.style.display = 'none';
+      var resetBtn = document.querySelector('.btn-danger');
+      if (resetBtn) resetBtn.style.display = 'none';
+      var delBtn = document.querySelector('.btn-del');
+      if (delBtn) delBtn.style.display = 'none';
+    } else {
+      // editor 和 super_admin：启用所有输入
+      var allInputs = document.querySelectorAll('input, select, textarea, button.stepper-btn');
+      allInputs.forEach(function(el) {
+        if (el.id === 'lotSearch' || el.closest('#loginOverlay') || el.closest('#userBar')) return;
+        el.disabled = false;
+        el.style.opacity = '';
+      });
+    }
+  }
+
+  // ===== 登录 =====
+  window.doLogin = async function() {
+    var username = document.getElementById('loginUsername').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var errorEl = document.getElementById('loginError');
+    var btn = document.getElementById('loginBtn');
+
+    if (!username || !password) {
+      errorEl.textContent = '请输入用户名和密码';
+      errorEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '登录中...';
+    errorEl.classList.remove('show');
+
+    try {
+      var hash = await sha256(password);
+      var resp = await fetch(SUPABASE_URL + '/rest/v1/profiles?username=eq.' + encodeURIComponent(username), {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!resp.ok) {
+        errorEl.textContent = '登录失败，请检查网络连接';
+        errorEl.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = '登 录';
+        return;
+      }
+
+      var users = await resp.json();
+      if (users.length === 0 || users[0].password_hash !== hash) {
+        errorEl.textContent = '用户名或密码错误';
+        errorEl.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = '登 录';
+        return;
+      }
+
+      // 登录成功
+      currentUser = { username: users[0].username, role: users[0].role };
+      saveAuth();
+      hideLoginOverlay();
+
+      // 清空密码输入
+      document.getElementById('loginPassword').value = '';
+    } catch(e) {
+      errorEl.textContent = '网络错误：' + e.message;
+      errorEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = '登 录';
+    }
+  };
+
+  // ===== 退出登录 =====
+  window.doLogout = function() {
+    if (!confirm('确定要退出登录吗？')) return;
+    currentUser = null;
+    saveAuth();
+    showLoginOverlay();
+    // 重置 UI
+    document.querySelectorAll('input, select, textarea, button.stepper-btn').forEach(function(el) {
+      el.disabled = false;
+      el.style.opacity = '';
+    });
+    document.querySelectorAll('.actions, .lot-manager .btn-sm-primary, .lot-manager .btn-sm-outline, #lotLockBtn').forEach(function(el) {
+      el.style.display = '';
+    });
+  };
+
+  // ===== 用户管理（超级管理员） =====
+  window.openUserMgmt = function() {
+    document.getElementById('userMgmtOverlay').classList.add('show');
+    loadUserList();
+  };
+
+  window.closeUserMgmt = function() {
+    document.getElementById('userMgmtOverlay').classList.remove('show');
+  };
+
+  async function loadUserList() {
+    var tbody = document.getElementById('userMgmtTbody');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">加载中...</td></tr>';
+
+    try {
+      var resp = await fetch(SUPABASE_URL + '/rest/v1/profiles?select=*&order=created_at.asc', {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY
+        }
+      });
+      var users = await resp.json();
+
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">暂无用户</td></tr>';
+        return;
+      }
+
+      var html = '';
+      users.forEach(function(u) {
+        var roleLabel = u.role === 'super_admin' ? '超级管理员' : (u.role === 'editor' ? '编辑者' : '查看者');
+        var createdAt = u.created_at ? new Date(u.created_at).toLocaleString('zh-CN') : '-';
+        var isSelf = currentUser && u.username === currentUser.username;
+        html += '<tr>' +
+          '<td>' + escHTML(u.username) + (isSelf ? ' <small style="color:#999;">(当前)</small>' : '') + '</td>' +
+          '<td>' + roleLabel + '</td>' +
+          '<td>' + createdAt + '</td>' +
+          '<td>' + (isSelf ? '<span style="color:#999;font-size:0.76rem;">-</span>' : '<button class="del-btn" onclick="deleteUser(\'' + escHTML(u.username) + '\',' + u.id + ')">删除</button>') + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    } catch(e) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444;">加载失败：' + e.message + '</td></tr>';
+    }
+  }
+
+  window.deleteUser = function(username, userId) {
+    if (!confirm('确定要删除用户「' + username + '」吗？此操作不可撤销。')) return;
+    fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + userId, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    }).then(function(r) {
+      if (r.ok) {
+        loadUserList();
+        showToast('用户「' + username + '」已删除', 'success');
+      } else {
+        showToast('删除失败', 'error');
+      }
+    }).catch(function(e) {
+      showToast('网络错误：' + e.message, 'error');
+    });
+  };
+
+  // ===== 添加用户 =====
+  window.openAddUser = function() {
+    document.getElementById('addUserOverlay').classList.add('show');
+    document.getElementById('addUserUsername').value = '';
+    document.getElementById('addUserPassword').value = '';
+    document.getElementById('addUserRole').value = 'editor';
+    document.getElementById('addUserError').classList.remove('show');
+  };
+
+  window.closeAddUser = function() {
+    document.getElementById('addUserOverlay').classList.remove('show');
+  };
+
+  window.doAddUser = async function() {
+    var username = document.getElementById('addUserUsername').value.trim();
+    var password = document.getElementById('addUserPassword').value;
+    var role = document.getElementById('addUserRole').value;
+    var errorEl = document.getElementById('addUserError');
+
+    if (!username || !password) {
+      errorEl.textContent = '用户名和密码不能为空';
+      errorEl.classList.add('show');
+      return;
+    }
+    if (username.length < 2) {
+      errorEl.textContent = '用户名至少 2 个字符';
+      errorEl.classList.add('show');
+      return;
+    }
+    if (password.length < 4) {
+      errorEl.textContent = '密码至少 4 个字符';
+      errorEl.classList.add('show');
+      return;
+    }
+
+    try {
+      var hash = await sha256(password);
+      var resp = await fetch(SUPABASE_URL + '/rest/v1/profiles', {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({ username: username, password_hash: hash, role: role })
+      });
+
+      if (resp.ok) {
+        closeAddUser();
+        loadUserList();
+        showToast('用户「' + username + '」添加成功', 'success');
+      } else {
+        var errData = await resp.json().catch(function() { return {}; });
+        errorEl.textContent = errData.message || '添加失败，用户名可能已存在';
+        errorEl.classList.add('show');
+      }
+    } catch(e) {
+      errorEl.textContent = '网络错误：' + e.message;
+      errorEl.classList.add('show');
+    }
+  };
+
+  // HTML 转义
+  function escHTML(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#039;'); }
+
+  // 回车键登录
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+    document.getElementById('loginUsername').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+    });
+  });
+
+  // ===== 停车场数据存储 =====
   var STORAGE_KEY = 'parking_info_v2';
 
   // ===== Supabase 云端 =====
-  var SUPABASE_URL = 'https://unulmtdacleljqtuggfp.supabase.co';
-  var SUPABASE_KEY = 'sb_publishable_v1H-PJyUUkuu9njdFCOXWg_SzdEctso';
   var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   var cloudSyncTimer = null;
   var cloudSyncing = false;
@@ -1503,6 +2129,8 @@
     if (state.currentLotId) { loadLot(state.currentLotId); } else { clearForm(); }
     updateProgress();
     renderLotList();
+    // 应用角色权限
+    if (currentUser) applyPermissions();
   }
 
   function saveLocalOnly() {
@@ -3680,6 +4308,12 @@
 
   // ========== 启动 ==========
   (function init() {
+    // 先恢复登录态
+    if (restoreAuth()) {
+      hideLoginOverlay();
+    } else {
+      showLoginOverlay();
+    }
     loadState();
   })();
 
@@ -4265,6 +4899,53 @@
 <script src="./leaflet.js"></script>
 <script>if(typeof L==='undefined'){document.write('<script src="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');}</script>
 <script src="https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- 用户管理面板 -->
+<div class="user-mgmt-overlay" id="userMgmtOverlay">
+  <div class="user-mgmt-panel">
+    <div class="user-mgmt-header">
+      <h3>用户管理</h3>
+      <button class="user-mgmt-close" onclick="closeUserMgmt()">✕</button>
+    </div>
+    <div class="user-mgmt-body">
+      <table class="user-mgmt-table">
+        <thead><tr><th>用户名</th><th>角色</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody id="userMgmtTbody"></tbody>
+      </table>
+    </div>
+    <div class="user-mgmt-footer">
+      <button class="btn btn-sm btn-primary" onclick="openAddUser()">+ 添加用户</button>
+      <button class="btn btn-sm btn-cancel" onclick="closeUserMgmt()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添加用户弹窗 -->
+<div class="add-user-overlay" id="addUserOverlay">
+  <div class="add-user-panel">
+    <h3>添加用户</h3>
+    <div class="form-group">
+      <label>用户名</label>
+      <input type="text" id="addUserUsername" placeholder="请输入用户名">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="addUserPassword" placeholder="请输入密码">
+    </div>
+    <div class="form-group">
+      <label>角色</label>
+      <select id="addUserRole">
+        <option value="editor">编辑者（有修改权限）</option>
+        <option value="viewer">查看者（仅查看）</option>
+      </select>
+    </div>
+    <div class="add-user-actions">
+      <button class="btn btn-sm btn-cancel" onclick="closeAddUser()">取消</button>
+      <button class="btn btn-sm btn-primary" onclick="doAddUser()">确认添加</button>
+    </div>
+    <p class="login-error" id="addUserError" style="margin-top:10px;"></p>
+  </div>
+</div>
 
 <!-- 信息总览弹窗 -->
 <div class="overview-overlay" id="overviewOverlay">
