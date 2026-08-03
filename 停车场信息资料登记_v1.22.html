@@ -1,0 +1,4172 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>停车场信息资料登记</title>
+<link rel="stylesheet" href="./leaflet.css" />
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="this.remove()">
+<style>
+  :root {
+    --primary: #1a56db;
+    --primary-light: #3b82f6;
+    --primary-dark: #1e40af;
+    --primary-bg: #e8f0fe;
+    --bg: #f4f6fb;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow: 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.08);
+    --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== 品牌区域 ===== */
+  .brand {
+    background: linear-gradient(135deg, #0f1d40 0%, #1a3a6b 30%, #1a56db 70%, #3b82f6 100%);
+    color: #fff;
+    padding: 36px 20px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .brand::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 240px; height: 240px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+  .brand::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+  .brand-company {
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 8px;
+  }
+  .brand-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .brand-subtitle {
+    font-size: 0.88rem;
+    opacity: 0.7;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+  .brand-dev {
+    font-size: 0.78rem;
+    opacity: 0.5;
+    margin-top: 6px;
+    font-weight: 300;
+    letter-spacing: 1px;
+  }
+  .brand-version {
+    font-size: 0.72rem;
+    opacity: 0.55;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+
+  /* ===== 页脚 ===== */
+  .page-footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    padding: 20px 0 16px 0;
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== 进度条 ===== */
+  .progress-section {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 18px;
+  }
+  .progress-inner {
+    background: var(--card-bg);
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    border-top: none;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+  .progress-text {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 20px 18px 48px;
+    flex: 1;
+    width: 100%;
+  }
+
+  /* ===== 停车场列表管理 ===== */
+  .lot-manager {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .lot-manager-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+  /* ===== 搜索下拉菜单 ===== */
+  .lot-search {
+    position: relative;
+    flex: 1;
+    min-width: 180px;
+    z-index: 100;
+  }
+  .lot-search input {
+    width: 100%;
+    height: 34px;
+    padding: 0 14px 0 34px;
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    font-size: 0.82rem;
+    color: var(--text);
+    background: #f8fafc;
+    outline: none;
+    transition: all var(--transition);
+  }
+  .lot-search input:hover { border-color: #cbd5e1; }
+  .lot-search input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    background: #fff;
+  }
+  .lot-search .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.82rem;
+    color: #999;
+    pointer-events: none;
+  }
+  .lot-search-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 200;
+  }
+  .lot-search-dropdown.show { display: block; }
+  .lot-dd-item {
+    padding: 9px 14px;
+    font-size: 0.84rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: background 0.15s;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .lot-dd-item:last-child { border-bottom: none; }
+  .lot-dd-item:hover { background: #eef4ff; color: var(--primary); }
+  .lot-dd-item.current { background: var(--primary); color: #fff; }
+  .lot-dd-item .lot-dd-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lot-dd-item .lot-dd-company { font-size:0.7rem; color:#94a3b8; flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lot-dd-item.current .lot-dd-company { color: rgba(255,255,255,0.7); }
+  .lot-dd-item .lot-dd-del {
+    font-size: 0.75rem;
+    opacity: 0;
+    cursor: pointer;
+    color: #ef4444;
+    flex-shrink: 0;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .lot-dd-item:hover .lot-dd-del { opacity: 0.8; }
+  .lot-dd-item .lot-dd-del:hover { opacity: 1; background: #fee2e2; }
+  .lot-dd-item .lot-dd-locked {
+    font-size: 0.65rem;
+    color: #f59e0b;
+    flex-shrink: 0;
+  }
+  .lot-dd-rn-input {
+    width: 100%;
+    border: none;
+    background: #f8fafc;
+    font-size: 0.84rem;
+    font-family: inherit;
+    outline: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1.5px solid var(--primary-light);
+  }
+  .lot-dd-empty {
+    padding: 16px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.82rem;
+  }
+
+  /* ===== 锁定功能 ===== */
+  .lot-lock-btn {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: #f8fafc;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    color: #94a3b8;
+  }
+  .lot-lock-btn:hover { border-color: var(--primary-light); background: #eef4ff; }
+  .lot-lock-btn.locked {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #d97706;
+  }
+  .lot-lock-btn.locked:hover { background: #fde68a; }
+
+  body.locked-mode .card input:not(.lot-dd-rn-input):not(#lotSearch),
+  body.locked-mode .card textarea,
+  body.locked-mode .card select,
+  body.locked-mode .card .stepper button,
+  body.locked-mode .gate-item input,
+  body.locked-mode .gate-item select,
+  body.locked-mode .pc-item input,
+  body.locked-mode .pc-item select,
+  body.locked-mode .dev-machine-item input,
+  body.locked-mode .dev-machine-item select,
+  body.locked-mode .dev-ch-name,
+  body.locked-mode .gate-brand-cst,
+  body.locked-mode input[id^="counterDevIP_"],
+  body.locked-mode .brand-mgr-actions button,
+  body.locked-mode .add-device-btn,
+  body.locked-mode .add-custom-btn,
+  body.locked-mode .counter-custom-del,
+  body.locked-mode .gate-del,
+  body.locked-mode .pc-del,
+  body.locked-mode .dev-machine-del,
+  body.locked-mode .btn-sm:not(.lot-lock-btn):not(#ovOpenBtn),
+  body.locked-mode #lotName,
+  body.locked-mode #lotCompany {
+    pointer-events: none !important;
+    opacity: 0.55 !important;
+    background-color: #f1f5f9 !important;
+    user-select: none !important;
+  }
+  body.locked-mode .card {
+    border-left: 3px solid #f59e0b;
+  }
+  body.locked-mode .lot-lock-btn {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+  }
+  body.locked-mode .lot-search input {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    background-color: #fff !important;
+  }
+
+  .btn-sm {
+    height: 34px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 18px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+  .btn-sm-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(26,86,219,0.2);
+  }
+  .btn-sm-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    box-shadow: 0 3px 10px rgba(26,86,219,0.3);
+    transform: translateY(-1px);
+  }
+  .btn-sm-outline {
+    background: #fff;
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+  }
+  .btn-sm-outline:hover {
+    background: var(--primary-bg);
+    transform: translateY(-1px);
+  }
+
+  /* ===== 卡片 ===== */
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 28px 30px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: box-shadow var(--transition);
+  }
+  .card:hover {
+    box-shadow: var(--shadow);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 8px;
+    padding: 4px 0;
+  }
+  .card-header:hover .collapse-btn {
+    background: #f1f5f9;
+  }
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .icon-counter { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1a56db; }
+  .icon-device { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+  .icon-gate    { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .collapse-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease, background 0.2s;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .card-collapsed .collapse-btn {
+    transform: rotate(-90deg);
+  }
+  .card-collapsed .card-header {
+    margin-bottom: 0 !important;
+  }
+  .card-collapsed > *:not(.card-header) {
+    display: none;
+  }
+
+  /* ===== 表单 ===== */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.2px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    height: 40px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    color: var(--text);
+    background: #f8fafc;
+    outline: none;
+    transition: all var(--transition);
+    font-family: inherit;
+    width: 100%;
+  }
+  .form-group textarea { height: auto; padding: 10px 12px; min-height: 48px; resize: vertical; }
+  .form-group input:hover,
+  .form-group select:hover,
+  .form-group textarea:hover { border-color: #cbd5e1; }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    background: #fff;
+    transform: translateY(-1px);
+  }
+
+  /* ===== 服务器 / 通道 / 电脑 区块 ===== */
+  .server-block {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    transition: box-shadow var(--transition);
+  }
+  .server-block:hover,
+  .gate-item:hover,
+  .pc-item:hover,
+  .dev-machine-item:hover,
+  .dev-channel-block:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .server-block-title {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .dot-main   { background: var(--primary); }
+  .dot-backup { background: var(--warning); }
+
+  .gate-item {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    overflow: visible;
+    transition: box-shadow var(--transition);
+  }
+  .gate-item-header {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .gate-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* 闸机宽高预设 */
+  .preset-row {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+  }
+  .preset-row input {
+    flex: 1;
+    min-width: 0;
+  }
+  .preset-row .preset-sel {
+    width: 72px;
+    height: 40px;
+    padding: 0 6px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    background: #f1f5f9;
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: all var(--transition);
+  }
+  .preset-row .preset-sel:hover { border-color: var(--primary-light); }
+  .preset-row .preset-sel:focus { border-color: var(--primary); }
+
+  /* IP 校验样式 */
+  .input-invalid {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.12) !important;
+    background: #fff5f5 !important;
+  }
+  .ip-error-msg {
+    font-size: 0.72rem;
+    color: var(--danger);
+    margin-top: 2px;
+    display: none;
+  }
+  .ip-error-msg.show { display: block; }
+
+  .pc-item {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: box-shadow var(--transition);
+  }
+  .pc-item-header {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pc-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* 停车场详细信息汇总 */
+  .lot-summary {
+    background: #fff;
+    border: 1.5px solid var(--primary);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .lot-summary-header {
+    background: linear-gradient(135deg, #1a73e8, #1557b0);
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .lot-summary-header .collapse-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    font-size: 0.65rem;
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .lot-summary-header .collapse-btn:hover { background: rgba(255,255,255,0.35); }
+  .lot-summary.collapsed .lot-summary-body { display: none; }
+  .lot-summary.collapsed .lot-summary-header { border-radius: var(--radius); }
+  .lot-summary.collapsed .collapse-btn { transform: rotate(-90deg); }
+  .lot-summary-body { padding: 16px 18px; max-height: 500px; overflow-y: auto; }
+  .sum-section { margin-bottom: 14px; }
+  .sum-section:last-child { margin-bottom: 0; }
+  .sum-sec-title {
+    font-size: 0.82rem; font-weight: 700; color: #1a73e8;
+    border-bottom: 1px solid #e8f0fe; padding-bottom: 4px; margin-bottom: 8px;
+  }
+  .sum-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .sum-table td { padding: 3px 8px; vertical-align: top; }
+  .sum-table td.sum-label { color: #888; white-space: nowrap; width: 1%; font-weight: 500; }
+  .sum-table td.sum-val { color: var(--text); word-break: break-all; }
+  .sum-badge {
+    display: inline-block; background: #e8f0fe; color: #1a73e8;
+    padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; margin: 1px 3px 1px 0;
+  }
+  .sum-badge.on { background: #e6f4ea; color: #137333; }
+  .sum-badge.off { background: #f1f3f4; color: #999; }
+  .sum-badge.dev-board { background: #fce8e6; color: #c5221f; }
+  .sum-badge.dev-camera { background: #e8f0fe; color: #1a73e8; }
+  .sum-badge.dev-intercom { background: #fef7e0; color: #f9ab00; }
+  .sum-badge.dev-rfid { background: #f3e8fd; color: #7c3aed; }
+  .sum-badge.dev-other { background: #e6f4ea; color: #137333; }
+  .sum-sub-item { margin-bottom: 6px; padding-left: 12px; border-left: 2px solid #e8f0fe; }
+  .sum-sub-item:last-child { margin-bottom: 0; }
+  .sum-empty { color: #bbb; font-size: 0.76rem; font-style: italic; }
+
+  /* 票机设备 */
+  .dev-channel-block {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: box-shadow var(--transition);
+  }
+  .dev-channel-header {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dev-channel-header .toggle-icon {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    margin-left: auto;
+    color: var(--text-secondary);
+  }
+  .dev-channel-block.collapsed .toggle-icon { transform: rotate(-90deg); }
+  .dev-channel-block.collapsed .dev-channel-fields,
+  .dev-channel-block.collapsed .dev-machine-list { display: none; }
+  .dev-channel-block.collapsed .dev-channel-header { margin-bottom: 0; }
+  .dev-channel-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .dev-machine-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .dev-machine-item-header {
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+  }
+  .dev-checkbox-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+  }
+  .dev-check-item { display: flex; flex-direction: column; gap: 4px; }
+  .ck-wrap {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 0.82rem; cursor: pointer;
+    white-space: nowrap;
+  }
+  .ck-wrap input[type="checkbox"] { accent-color: var(--primary); width: 15px; height: 15px; }
+  .dev-check-extra { display: none; flex-direction: column; gap: 4px; margin-left: 20px; }
+  .dev-check-extra.show { display: flex; }
+  .brand-custom-wrap { display: none; }
+  .brand-custom-wrap.show { display: block; }
+  /* 收费处自定义设备 */
+  .counter-dev-section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .counter-custom-section { margin-top: 10px; }
+  .counter-custom-header { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 0; user-select: none; }
+  .counter-custom-header:hover { color: var(--primary); }
+  .counter-custom-body { margin-top: 8px; }
+  .counter-custom-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .counter-custom-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--primary-bg); border-radius: 12px; font-size: 0.78rem; }
+  .counter-custom-tag .tag-remove { cursor: pointer; color: var(--danger); font-weight: bold; font-size: 0.85rem; }
+  .counter-custom-tag .tag-remove:hover { color: #c62828; }
+  .counter-custom-add-row { display: flex; align-items: center; gap: 6px; }
+  /* 品牌管理 */
+  .brand-mgr-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .brand-tag { display: inline-flex; align-items: center; gap: 4px; background: #e8f0fe; color: #1a56db; padding: 4px 10px; border-radius: 4px; font-size: 0.82rem; }
+  .brand-tag-del { cursor: pointer; font-weight: bold; color: #999; line-height: 1; }
+  .brand-tag-del:hover { color: #e00; }
+  .brand-mgr-add { display: flex; gap: 6px; }
+  .brand-mgr-add input { flex: 1; height: 32px; padding: 0 8px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; }
+  .brand-mgr-add input:focus { border-color: var(--primary); }
+  .brand-mgr-add button { padding: 0 14px; height: 32px; background: var(--primary); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  .brand-mgr-add button:hover { background: #1557c4; }
+  .dev-check-extra input {
+    height: 32px; padding: 0 8px; border: 1.5px solid var(--border);
+    border-radius: 6px; font-size: 0.8rem; outline: none; width: 100%;
+    transition: all var(--transition);
+  }
+  .dev-check-extra input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(26,86,219,0.1);
+  }
+  .dev-check-extra textarea { min-height: 48px; resize: vertical; }
+  /* ===== +/- 步进器 ===== */
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #fff;
+    height: 40px;
+  }
+  .stepper-btn {
+    width: 36px;
+    height: 38px;
+    border: none;
+    background: #f1f5f9;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    user-select: none;
+    flex-shrink: 0;
+    line-height: 1;
+    padding: 0;
+  }
+  .stepper-btn:hover { background: #e2e8f0; }
+  .stepper-btn:active { background: #cbd5e1; }
+  .stepper-val {
+    min-width: 40px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    padding: 0 4px;
+    user-select: none;
+  }
+  @media (max-width: 768px) {
+    .stepper-btn { width: 40px; height: 42px; font-size: 1.2rem; }
+    .stepper { height: 44px; }
+  }
+
+
+  .hint { font-size: 0.78rem; color: #999; margin-top: 2px; }
+
+  @media (max-width: 768px) {
+    .brand { padding: 28px 16px 24px; }
+    .brand-title { font-size: 1.35rem; }
+    .brand-company { font-size: 0.7rem; }
+    .card { padding: 20px 12px; }
+    .form-row { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr; }
+    .gate-fields { grid-template-columns: 1fr; }
+    .gate-fields .preset-row { gap: 4px; }
+    .gate-fields .preset-row input { flex: 1; min-width: 0; }
+    .gate-fields .preset-row .preset-sel { width: 64px; font-size: 0.72rem; padding: 0 4px; }
+    .dev-checkbox-group { grid-template-columns: 1fr; gap: 4px 8px; }
+    .dev-check-item { overflow: hidden; }
+    .dev-check-extra { margin-left: 8px; }
+    .dev-check-extra input,
+    .dev-check-extra textarea { width: 100%; box-sizing: border-box; max-width: 100%; }
+    .dev-machine-item { overflow: hidden; padding: 10px 8px; }
+    .dev-machine-item-header { font-size: 0.78rem; }
+    .ck-wrap { font-size: 0.78rem; white-space: normal; word-break: break-all; }
+    .actions { flex-direction: column; }
+    .btn { width: 100%; }
+    .lot-manager { flex-direction: column; align-items: stretch; }
+    .lot-search { flex: 1; min-width: 150px; }
+    .lot-search { width: 100%; }
+    .pc-fields { grid-template-columns: 1fr; }
+    #mapContainer { height: 280px; }
+  }
+
+  /* ===== 地图卡片 ===== */
+  .card-map .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .map-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .map-toolbar .btn-sm {
+    font-size: 0.78rem;
+  }
+  .map-coords {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .map-coords input {
+    width: 110px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--text);
+    background: #f8fafc;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .map-coords input:focus { border-color: var(--primary); }
+  .map-coords label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-right: -4px;
+  }
+  #mapContainer {
+    width: 100%;
+    height: 420px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    z-index: 1;
+  }
+  /* 自定义地图标记点 */
+  .custom-marker {
+    width: 28px; height: 28px;
+    background: #e53e3e;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    position: relative;
+  }
+  .custom-marker::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px; height: 8px;
+    background: #fff;
+    border-radius: 50%;
+  }
+  .map-hint {
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* ===== 信息总览页 ===== */
+  .overview-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    display: none;
+    justify-content: center; align-items: center;
+  }
+  .overview-overlay.show { display: flex; }
+  .overview-panel {
+    width: 95vw; max-width: 1200px; height: 90vh;
+    background: var(--bg);
+    border-radius: var(--radius);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .ov-header {
+    background: linear-gradient(135deg, #0f1d40, #1a56db);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .ov-header h2 { font-size: 1.2rem; font-weight: 700; flex:1; }
+  .ov-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,0.15);
+    color: #fff; font-size: 1.2rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .ov-close:hover { background: rgba(255,255,255,0.3); }
+  .ov-body {
+    display: flex; flex: 1; overflow: hidden;
+  }
+  .ov-left {
+    width: 380px; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: #fff;
+    overflow: hidden;
+  }
+  .ov-stats {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; padding: 14px 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .ov-stat-card {
+    background: #f8fafc; border-radius: 10px;
+    padding: 12px; text-align: center;
+    border: 1px solid var(--border);
+  }
+  .ov-stat-card .num {
+    font-size: 1.6rem; font-weight: 800;
+    color: var(--primary); line-height: 1.2;
+  }
+  .ov-stat-card .lbl {
+    font-size: 0.75rem; color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .ov-list-header {
+    padding: 10px 16px;
+    font-size: 0.82rem; font-weight: 700;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: #fafbfc;
+  }
+  .ov-list {
+    flex: 1; overflow-y: auto; padding: 4px 0;
+  }
+  .ov-lot-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .ov-lot-item:hover { background: #f1f5f9; }
+  .ov-lot-item.active {
+    background: var(--primary-bg);
+    border-left-color: var(--primary);
+    font-weight: 600;
+  }
+  .ov-lot-item .ov-lot-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--primary); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.65rem; font-weight: 700;
+  }
+  .ov-lot-item .ov-lot-name {
+    flex: 1; font-size: 0.88rem; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .ov-lot-item .ov-lot-info {
+    font-size: 0.72rem; color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .ov-lot-item .ov-no-coord {
+    font-size: 0.7rem; color: #f59e0b;
+  }
+  .ov-right {
+    flex: 1; position: relative; min-width: 0;
+  }
+  #overviewMap { width: 100%; height: 100%; }
+
+  @media (max-width: 768px) {
+    .ov-body { flex-direction: column; }
+    .ov-left { width: 100%; max-height: 40%; border-right: none; border-bottom: 1px solid var(--border); }
+    .ov-right { height: 60%; }
+  }
+
+  /* ===== 页脚 ===== */
+  .footer {
+    text-align: center;
+    padding: 20px 16px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    border-top: 1px solid var(--border);
+    background: var(--card-bg);
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="brand-company">金达资讯科技技术有限公司</div>
+  <div class="brand-title">停车场信息资料登记系统</div>
+  <div class="brand-subtitle">多停车场管理 &middot; 收费处 &amp; 出入口信息采集</div>
+  <div class="brand-version">v1.21</div>
+</div>
+
+<div class="progress-section" id="progressSection">
+  <div class="progress-inner">
+    <div class="progress-label">资料填写进度</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">0%</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 停车场选择与管理 -->
+  <div class="lot-manager">
+    <span class="lot-manager-label">停车场：</span>
+    <div class="lot-search" id="lotSearchWrap">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="lotSearch" placeholder="搜索停车场或管理公司..." autocomplete="off">
+      <div class="lot-search-dropdown" id="lotSearchDropdown"></div>
+    </div>
+    <button class="btn-sm btn-sm-primary" onclick="addLot()">+ 新增</button>
+    <button class="btn-sm btn-sm-outline" onclick="cloneLot()" title="复制当前停车场">&#128203; 复制</button>
+    <button class="btn-sm btn-sm-primary" id="ovOpenBtn" onclick="openOverview()" style="background-color:#0066cc;">&#128202; 信息总览</button>
+  </div>
+
+  <!-- 停车场名称 -->
+  <div class="card" style="padding:14px 20px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <label style="font-weight:600;font-size:0.9rem;white-space:nowrap;">停车场名称：</label>
+      <input type="text" id="lotName" placeholder="请输入停车场名称" style="flex:1;min-width:200px;height:36px;padding:0 10px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem;outline:none;" oninput="updateProgress()">
+      <label style="font-weight:600;font-size:0.9rem;white-space:nowrap;">管理公司：</label>
+      <input type="text" id="lotCompany" placeholder="请输入管理公司名称" style="flex:1;min-width:180px;height:36px;padding:0 10px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem;outline:none;" oninput="renameCompany();updateProgress()">
+      <button class="lot-lock-btn" id="lotLockBtn" onclick="toggleLock()" title="锁定/解锁停车场资料">&#128274;</button>
+    </div>
+  </div>
+
+  <!-- 停车场详细信息汇总 -->
+  <div class="lot-summary" id="lotSummary" style="display:none;">
+    <div class="lot-summary-header" onclick="toggleCard(this)">
+      <span class="lot-summary-title">&#128203; 停车场详细信息汇总</span>
+      <button class="collapse-btn" onclick="event.stopPropagation();toggleCard(this.closest('.lot-summary-header'))" title="折叠/展开">&#9660;</button>
+    </div>
+    <div class="lot-summary-body" id="lotSummaryBody"></div>
+  </div>
+
+  <!-- 收费处信息 -->
+  <div class="card" id="card-counter">
+    <div class="card-header" onclick="toggleCard(this)">
+      <div class="card-icon icon-counter">&#128179;</div>
+      <span class="card-title">收费处信息</span>
+      <button class="collapse-btn" onclick="event.stopPropagation();toggleCard(this.closest('.card-header'))" title="折叠/展开">&#9660;</button>
+    </div>
+
+    <!-- 主服务器 -->
+    <div class="server-block" style="margin-bottom:14px;">
+      <div class="server-block-title"><span class="dot dot-main"></span>主服务器</div>
+      <div class="form-row triple">
+        <div class="form-group">
+          <label for="mainIP">IP地址</label>
+          <input type="text" id="mainIP" value="192.168.8." placeholder="例：192.168.1.10" oninput="validateIP(this);updateProgress()" onblur="validateIP(this,true)">
+          <div class="ip-error-msg" id="mainIPErr">请输入合法的 IPv4 地址</div>
+        </div>
+        <div class="form-group">
+          <label for="mainSun">向日葵号码</label>
+          <input type="text" id="mainSun" placeholder="例：123 456 789" oninput="updateProgress()">
+        </div>
+        <div class="form-group">
+          <label for="mainOS">操作系统</label>
+          <select id="mainOS" onchange="updateProgress()">
+            <option value="">-- 请选择 --</option>
+            <option value="Windows">Windows</option>
+            <option value="Linux">Linux</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 备用服务器 -->
+    <div class="server-block" style="margin-bottom:14px;">
+      <div class="server-block-title"><span class="dot dot-backup"></span>备用服务器</div>
+      <div class="form-row triple">
+        <div class="form-group">
+          <label for="backupIP">IP地址</label>
+          <input type="text" id="backupIP" value="192.168.8." placeholder="例：192.168.1.11" oninput="validateIP(this);updateProgress()" onblur="validateIP(this,true)">
+          <div class="ip-error-msg" id="backupIPErr">请输入合法的 IPv4 地址</div>
+        </div>
+        <div class="form-group">
+          <label for="backupSun">向日葵号码</label>
+          <input type="text" id="backupSun" placeholder="例：987 654 321" oninput="updateProgress()">
+        </div>
+        <div class="form-group">
+          <label for="backupOS">操作系统</label>
+          <select id="backupOS" onchange="updateProgress()">
+            <option value="">-- 请选择 --</option>
+            <option value="Windows">Windows</option>
+            <option value="Linux">Linux</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="pcCount">电脑数量</label>
+        <div class="stepper" id="pcCount" data-min="0" data-max="30">
+              <button class="stepper-btn stepper-minus" onclick="stepperDown(this);renderPcs();updateProgress()">&#8722;</button>
+              <span class="stepper-val">0</span>
+              <button class="stepper-btn stepper-plus" onclick="stepperUp(this);renderPcs();updateProgress()">+</button>
+            </div>
+      </div>
+    </div>
+    <div class="summary-bar" id="pcSummary"></div>
+    <div class="pc-list" id="pcList"></div>
+
+    <!-- 收费处设备 -->
+    <div class="counter-dev-section">
+      <div class="server-block-title" style="margin-bottom:8px;"><span class="dot dot-main"></span>收费处设备（勾选即可填写详细信息）</div>
+      <div class="dev-checkbox-group" id="counterDevGroup"></div>
+      <div class="counter-custom-section">
+        <div class="counter-custom-header" onclick="toggleCounterCustom(this)">
+          <span style="font-size:0.82rem;color:var(--text-secondary);">+ 自定义添加设备</span>
+          <span class="toggle-icon" style="font-size:0.7rem;">&#9660;</span>
+        </div>
+        <div class="counter-custom-body" style="display:none;">
+          <div class="counter-custom-list" id="counterCustomList"></div>
+          <div class="counter-custom-add-row">
+            <input type="text" id="counterCustomName" placeholder="输入设备名称" style="width:140px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.82rem;">
+            <button class="btn btn-sm btn-sm-primary" onclick="addCounterCustom()" style="font-size:0.78rem;">添加</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 票机设备 -->
+  <div class="card" id="card-device">
+    <div class="card-header" onclick="toggleCard(this)">
+      <div class="card-icon icon-device">&#9881;</div>
+      <span class="card-title">票机设备</span>
+      <button class="collapse-btn" onclick="event.stopPropagation();toggleCard(this.closest('.card-header'))" title="折叠/展开">&#9660;</button>
+    </div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label for="devChannelCount">票机通道总数量</label>
+        <div class="stepper" id="devChannelCount" data-min="0" data-max="30">
+          <button class="stepper-btn stepper-minus" onclick="stepperDown(this);renderDevChannels();updateProgress()">&#8722;</button>
+          <span class="stepper-val">0</span>
+          <button class="stepper-btn stepper-plus" onclick="stepperUp(this);renderDevChannels();updateProgress()">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-bar" id="devChannelSummary"></div>
+    <div class="dev-channel-list" id="devChannelList"></div>
+  </div>
+
+  <!-- 出入口处信息 -->
+  <div class="card" id="card-gate">
+    <div class="card-header" onclick="toggleCard(this)">
+      <div class="card-icon icon-gate">&#128682;</div>
+      <span class="card-title">出入口处信息</span>
+      <button class="collapse-btn" onclick="event.stopPropagation();toggleCard(this.closest('.card-header'))" title="折叠/展开">&#9660;</button>
+    </div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label for="gateCount">通道总数量</label>
+        <div class="stepper" id="gateCount" data-min="0" data-max="50">
+          <button class="stepper-btn stepper-minus" onclick="stepperDown(this);renderGates();updateProgress()">&#8722;</button>
+          <span class="stepper-val">0</span>
+          <button class="stepper-btn stepper-plus" onclick="stepperUp(this);renderGates();updateProgress()">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-bar" id="gateSummary"></div>
+    <div class="gate-list" id="gateList"></div>
+  </div>
+
+  <!-- 品牌管理 -->
+  <div class="card" id="card-brand-mgr">
+    <div class="card-header" onclick="toggleCard(this)">
+      <div class="card-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;">&#9879;</div>
+      <span class="card-title">闸机品牌管理</span>
+      <button class="collapse-btn" onclick="event.stopPropagation();toggleCard(this.closest('.card-header'))" title="折叠/展开">&#9660;</button>
+    </div>
+    <div style="padding:12px 20px;">
+      <div class="brand-mgr-list" id="brandMgrList"></div>
+      <div class="brand-mgr-add">
+        <input type="text" id="brandMgrInput" placeholder="输入新品牌名称" onkeydown="if(event.key==='Enter')addBrandFromMgr()">
+        <button onclick="addBrandFromMgr()">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 澳门地图 -->
+  <div class="card card-map" id="card-map">
+    <div class="card-header" onclick="toggleCard(this)">
+      <div class="card-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1a56db;">&#128506;</div>
+      <span class="card-title">澳门停车场位置</span>
+      <button class="collapse-btn" onclick="event.stopPropagation();toggleCard(this.closest('.card-header'))" title="折叠/展开">&#9660;</button>
+    </div>
+    <div class="card-body">
+      <div class="map-toolbar">
+        <span style="font-size:0.82rem;color:var(--text-secondary);white-space:nowrap;">在地图上点击标记车场位置：</span>
+        <div class="map-coords">
+          <label>纬度</label>
+          <input type="text" id="mapLat" placeholder="22.1987" inputmode="decimal">
+          <label>经度</label>
+          <input type="text" id="mapLng" placeholder="113.5439" inputmode="decimal">
+        </div>
+        <button class="btn-sm btn-sm-primary" onclick="updateMapMarker()">定位</button>
+        <button class="btn-sm btn-sm-outline" onclick="saveMapCoord()">保存坐标</button>
+        <button class="btn-sm btn-sm-outline" onclick="resetMapView()">复位</button>
+      </div>
+      <div id="mapContainer"></div>
+      <div id="mapDownload" class="map-download-prompt" style="display:none;">
+        <div style="text-align:center;padding:30px 15px;background:#fffbeb;border:2px dashed #f59e0b;border-radius:8px;">
+          <div style="font-size:1.15rem;margin-bottom:8px;color:#92400e;">地图组件未加载</div>
+          <div style="font-size:0.82rem;color:#78716c;margin-bottom:16px;line-height:1.6;">缺少 leaflet.css / leaflet.js，地图无法显示。<br>点击下方按钮下载文件，保存到项目文件夹后刷新页面即可。</div>
+          <button class="btn btn-primary btn-sm" onclick="downloadLeafletFiles(this)" style="font-size:0.9rem;padding:8px 24px;">下载地图组件</button>
+        </div>
+      </div>
+      <div class="map-hint">点击地图选取坐标，或在输入框中手动输入经纬度后点击「定位」</div>
+    </div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="actions">
+    <button class="btn btn-del" onclick="deleteCurrentLot()">&#128465; 删除当前停车场</button>
+    <button class="btn btn-danger" id="btnReset" onclick="resetAll()">&#8635; 清空重置</button>
+    <button class="btn btn-primary" onclick="previewData()">&#128424; 打印预览</button>
+    <button class="btn btn-success" onclick="exportPDF()">&#128196; 导出 PDF</button>
+    <button class="btn btn-outline" onclick="exportAll()">&#128190; 导出 Excel</button>
+    <button class="btn btn-outline" onclick="importJSON()">&#128229; 导入 Excel</button>
+    <button class="btn btn-success" onclick="saveCurrent()">&#128190; 保存到本地</button>
+  </div>
+
+  <!-- 撤销操作栏 -->
+  <div class="undo-bar" id="undoBar">
+    <span class="undo-msg">数据已清空</span>
+    <button class="btn btn-sm btn-sm-primary" onclick="undoReset()">↩ 撤销</button>
+    <span class="undo-countdown" id="undoCountdown">(5s)</span>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 导入确认对话框 -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box">
+    <div class="modal-title">导入 Excel 数据</div>
+    <div class="modal-body">
+      <p>智能合并：只更新有修改的字段，保留未改内容及本地独有数据</p>
+      <p style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">覆盖全部：清空本地数据，全部替换为导入内容</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btnMergeSmart">&#128229; 智能合并</button>
+      <button class="btn btn-outline" id="btnOverwriteAll">&#128190; 覆盖全部</button>
+      <button class="btn btn-cancel" id="btnCancelImport">取消</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleImportFile(event)">
+
+<div class="save-indicator" id="saveIndicator">
+  <span>&#10003; 已自动保存</span>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var STORAGE_KEY = 'parking_info_v2';
+  var PRESET_BRANDS = ['万胜', '红门', '海康', '捷顺', '巴图姆'];
+  var IP_REGEX = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/;
+
+  var toastEl = document.getElementById('toast');
+  var lotSearchDropdownEl = document.getElementById('lotSearchDropdown');
+  var lotSearchEl = document.getElementById('lotSearch');
+  var lotNameEl = document.getElementById('lotName');
+  var lotCompanyEl = document.getElementById('lotCompany');
+  var lotLockBtnEl = document.getElementById('lotLockBtn');
+  var gateCountEl = document.getElementById('gateCount');
+  var gateListEl = document.getElementById('gateList');
+  var gateSummaryEl = document.getElementById('gateSummary');
+  var pcCountEl = document.getElementById('pcCount');
+  var pcListEl = document.getElementById('pcList');
+  var pcSummaryEl = document.getElementById('pcSummary');
+
+  var devChannelCountEl = document.getElementById('devChannelCount');
+  var devChannelListEl = document.getElementById('devChannelList');
+  var devChannelSummaryEl = document.getElementById('devChannelSummary');
+
+  var DEVICE_TYPES = ['switch', 'intercom', 'board', 'screen', 'ground', 'camera', 'tapper', 'rfid', 'macau', 'union', 'easy', 'smallWhiteScreen', 'lcdScreen'];
+  var DEVICE_LABELS = { switch:'交换机', intercom:'对讲分机', board:'主板', screen:'屏幕', ground:'地感检测器', camera:'车牌识别摄像头', tapper:'拍卡器', rfid:'RFID', macau:'澳门通', union:'银联闪付', easy:'聚易用', smallWhiteScreen:'小白屏', lcdScreen:'LCD屏' };
+  var DEVICE_NEEDS_IP = { intercom: true, board: true, camera: true, rfid: true, lcdScreen: true };
+  var DEVICE_HINT = { switch:'例：备注信息', intercom:'例：IP地址', board:'例：IP地址', screen:'例：备注信息', ground:'例：备注信息', camera:'例：IP地址', tapper:'例：备注信息', rfid:'例：IP地址', macau:'例：备注信息', union:'例：备注信息', easy:'例：备注信息', smallWhiteScreen:'例：备注信息', lcdScreen:'例：IP地址' };
+
+  // 收费处设备（独立于票机通道）
+  var COUNTER_DEVICE_TYPES = ['intercomHost', 'macauPass', 'unionPay', 'receiptPrinter', 'printer', 'cardDispenser'];
+  var COUNTER_DEVICE_LABELS = { intercomHost:'对讲主机', macauPass:'澳门通', unionPay:'聚易用', receiptPrinter:'小票机', printer:'打印机', cardDispenser:'发卡机' };
+  var COUNTER_NEEDS_IP = { intercomHost: true };
+
+  var counterDevGroupEl = document.getElementById('counterDevGroup');
+  var counterCustomListEl = document.getElementById('counterCustomList');
+
+  // 通道折叠状态
+  var blocksCollapsed = {};
+
+  window.toggleChannelCollapse = function(headerEl) {
+    var block = headerEl.closest('.dev-channel-block');
+    var chIdx = parseInt(block.getAttribute('data-ch'));
+    block.classList.toggle('collapsed');
+    blocksCollapsed[chIdx] = block.classList.contains('collapsed');
+  };
+
+  // 撤销备份
+  var undoBackup = null;
+  var undoTimer = null;
+  var undoSec = 0;
+
+  // ========== 数据模型 ==========
+  var state = { lotIds: [], currentLotId: null, lots: {} };
+
+  function newId() { return 'lot_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var p = JSON.parse(raw);
+      state.lotIds = p.lotIds || [];
+      state.lots = p.lots || {};
+      state.currentLotId = p.currentLotId || (state.lotIds[0] || null);
+      return true;
+    } catch(e) { return false; }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        lotIds: state.lotIds,
+        currentLotId: state.currentLotId,
+        lots: state.lots
+      }));
+    } catch(e) { showToast('保存失败：存储空间不足', 'error'); }
+  }
+
+  // ========== 品牌管理 ==========
+  function getBrands() {
+    if (!state.currentLotId || !state.lots[state.currentLotId]) return PRESET_BRANDS.slice();
+    return (state.lots[state.currentLotId].brands || PRESET_BRANDS.slice());
+  }
+
+  function addBrand(name) {
+    if (!name || !state.currentLotId || !state.lots[state.currentLotId]) return;
+    var lot = state.lots[state.currentLotId];
+    if (!lot.brands) lot.brands = PRESET_BRANDS.slice();
+    if (lot.brands.indexOf(name) === -1) { lot.brands.push(name); saveState(); renderBrandMgr(); refreshAllBrandSelects(); }
+  }
+
+  window.deleteBrand = function(name) {
+    if (!state.currentLotId || !state.lots[state.currentLotId]) return;
+    var lot = state.lots[state.currentLotId];
+    if (!lot.brands) return;
+    var idx = lot.brands.indexOf(name);
+    if (idx === -1) return;
+    lot.brands.splice(idx, 1);
+    saveState();
+    renderBrandMgr();
+    refreshAllBrandSelects();
+  };
+
+  window.addBrandFromMgr = function() {
+    var input = document.getElementById('brandMgrInput');
+    var name = (input.value || '').trim();
+    if (!name) { showToast('请输入品牌名称', 'error'); return; }
+    addBrand(name);
+    input.value = '';
+  };
+
+  function renderBrandMgr() {
+    var listEl = document.getElementById('brandMgrList');
+    if (!listEl) return;
+    var brands = getBrands();
+    var html = '';
+    for (var i = 0; i < brands.length; i++) {
+      var b = esc(brands[i]);
+      var bj = b.replace(/'/g, "\\'");
+      html += '<span class="brand-tag">' + b + '<span class="brand-tag-del" onclick="deleteBrand(\'' + bj + '\')">&times;</span></span>';
+    }
+    listEl.innerHTML = html || '<span style="color:#999;font-size:0.82rem;">暂无品牌，请添加</span>';
+  }
+
+  function brandSelectHTML(brands, selected, idx) {
+    var h = '<select class="gate-brand-sel" onchange="brandChange(this,' + idx + ')">' +
+      '<option value="">-- 请选择 --</option>';
+    for (var i = 0; i < brands.length; i++) {
+      var s = (brands[i] === selected) ? ' selected' : '';
+      h += '<option value="' + esc(brands[i]) + '"' + s + '>' + esc(brands[i]) + '</option>';
+    }
+    h += '<option value="__CUSTOM__" style="color:#1a73e8;font-style:italic">+ 自定义品牌...</option></select>';
+    h += '<div class="brand-custom-wrap" id="wrap_' + idx + '" style="margin-top:4px;">' +
+      '<input type="text" class="gate-brand-cst" id="cst_' + idx +
+      '" placeholder="输入自定义品牌" onblur="customBlur(' + idx + ')" onkeydown="if(event.key===\'Enter\')this.blur()"></div>';
+    return h;
+  }
+
+
+  // ========== 步进器工具函数 ==========
+  window.stepperUp = function(btn) {
+    var stepper = btn.closest('.stepper');
+    var valEl = stepper.querySelector('.stepper-val');
+    var max = parseInt(stepper.getAttribute('data-max') || '30');
+    var val = parseInt(valEl.textContent) || 0;
+    if (val < max) { valEl.textContent = val + 1; }
+  };
+  window.stepperDown = function(btn) {
+    var stepper = btn.closest('.stepper');
+    var valEl = stepper.querySelector('.stepper-val');
+    var min = parseInt(stepper.getAttribute('data-min') || '0');
+    var val = parseInt(valEl.textContent) || 0;
+    if (val > min) { valEl.textContent = val - 1; }
+  };
+  function getStepperVal(el) {
+    if (!el) return '0';
+    var valEl = el.querySelector('.stepper-val');
+    return valEl ? valEl.textContent.trim() : '0';
+  }
+  function setStepperVal(el, val) {
+    if (!el) return;
+    var valEl = el.querySelector('.stepper-val');
+    if (valEl) valEl.textContent = String(val);
+  }
+
+  // ========== 通道渲染 ==========
+  function renderGates(brandMap) {
+    var n = parseInt(getStepperVal(gateCountEl), 10);
+    if (isNaN(n) || n < 0) n = 0;
+    if (n > 50) { setStepperVal(gateCountEl, 50); n = 50; }
+
+    gateSummaryEl.className = n > 0 ? 'summary-bar show' : 'summary-bar';
+    gateSummaryEl.textContent = n > 0 ? '当前共 ' + n + ' 条通道，请逐条填写详细信息' : '';
+
+    var brands = getBrands();
+    var prev = collectGateData();
+    var html = '';
+
+    var WIDTH_PRESETS = ['2.5', '3.0', '3.5', '4.0', '4.5', '5.0'];
+    var HEIGHT_PRESETS = ['1.8', '2.0', '2.2', '2.5', '3.0'];
+
+    for (var i = 1; i <= n; i++) {
+      var p = prev[i] || {};
+      var selB = (brandMap && brandMap[i]) ? brandMap[i] : (p.brand || '');
+      html +=
+        '<div class="gate-item">' +
+          '<div class="gate-item-header"><span class="dot"></span>通道 ' + i + '</div>' +
+          '<div class="gate-fields">' +
+            '<div class="form-group">' +
+              '<label>通道编号</label>' +
+              '<input type="text" class="gate-no" value="' + esc(p.no || i) + '" placeholder="通道编号" oninput="updateProgress()">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>宽度（米）</label>' +
+              '<div class="preset-row">' +
+                '<input type="text" inputmode="decimal" class="gate-w" value="' + esc(p.width || '') + '" placeholder="例：3.50" oninput="updateProgress()">' +
+                '<select class="preset-sel" onchange="setPreset(this,\'gate-w\')"><option value="">预设</option>' +
+                  WIDTH_PRESETS.map(function(v){return '<option value="'+v+'">'+v+'m</option>';}).join('') +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>高度（米）</label>' +
+              '<div class="preset-row">' +
+                '<input type="text" inputmode="decimal" class="gate-h" value="' + esc(p.height || '') + '" placeholder="例：2.20" oninput="updateProgress()">' +
+                '<select class="preset-sel" onchange="setPreset(this,\'gate-h\')"><option value="">预设</option>' +
+                  HEIGHT_PRESETS.map(function(v){return '<option value="'+v+'">'+v+'m</option>';}).join('') +
+                '</select>' +
+              '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>闸机种类</label>' +
+              '<select class="gate-type-sel" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.82rem;" onchange="updateProgress()">' +
+                '<option value="">请选择</option>' +
+                '<option value="直杆"' + (p.type === '直杆' ? ' selected' : '') + '>直杆</option>' +
+                '<option value="折臂杆"' + (p.type === '折臂杆' ? ' selected' : '') + '>折臂杆</option>' +
+                '<option value="栅栏闸"' + (p.type === '栅栏闸' ? ' selected' : '') + '>栅栏闸</option>' +
+              '</select>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>主杆长度（米）</label>' +
+              '<input type="text" inputmode="decimal" class="gate-main-len" value="' + esc(p.mainLength || '') + '" placeholder="例：3.00" oninput="updateProgress()">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>副杆长度（米）</label>' +
+              '<input type="text" inputmode="decimal" class="gate-sec-len" value="' + esc(p.secLength || '') + '" placeholder="例：0.50" oninput="updateProgress()">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>闸机品牌</label>' +
+              brandSelectHTML(brands, selB, i) +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+    gateListEl.innerHTML = html;
+  }
+
+  window.setPreset
+  window.renderGates = renderGates;
+
+  window.setPreset = function(sel, className) {
+    if (!sel.value) return;
+    var input = sel.closest('.preset-row').querySelector('.' + className);
+    if (input) { input.value = sel.value; updateProgress(); }
+    sel.value = '';
+  };
+
+  function collectGateData() {
+    var d = {};
+    var items = gateListEl.querySelectorAll('.gate-item');
+    items.forEach(function(el, idx) {
+      var sel = el.querySelector('.gate-brand-sel');
+      var brand = '';
+      if (sel) {
+        brand = (sel.value === '__CUSTOM__') ? (el.querySelector('.gate-brand-cst') || {}).value || '' : sel.value;
+      }
+      d[idx + 1] = {
+        no: (el.querySelector('.gate-no') || {}).value || '',
+        type: (el.querySelector('.gate-type-sel') || {}).value || '',
+        mainLength: (el.querySelector('.gate-main-len') || {}).value || '',
+        secLength: (el.querySelector('.gate-sec-len') || {}).value || '',
+        width: (el.querySelector('.gate-w') || {}).value || '',
+        height: (el.querySelector('.gate-h') || {}).value || '',
+        brand: (brand || '').trim()
+      };
+    });
+    return d;
+  }
+
+  // ========== 品牌事件 ==========
+  window.brandChange = function(sel, idx) {
+    var wrap = document.getElementById('wrap_' + idx);
+    var cst = document.getElementById('cst_' + idx);
+    if (sel.value === '__CUSTOM__') {
+      wrap.classList.add('show');
+      if (cst) cst.focus();
+    } else {
+      wrap.classList.remove('show');
+      if (cst) cst.value = '';
+    }
+    updateProgress();
+  };
+
+  window.customBlur = function(idx) {
+    var cst = document.getElementById('cst_' + idx);
+    if (!cst) return;
+    var name = cst.value.trim();
+    if (name) {
+      addBrand(name);
+      refreshOneBrand(idx);
+    }
+  };
+
+  function refreshOneBrand(idx) {
+    var items = gateListEl.querySelectorAll('.gate-item');
+    var el = items[idx - 1];
+    if (!el) return;
+    var brands = getBrands();
+    var sel = el.querySelector('.gate-brand-sel');
+    var cst = el.querySelector('.gate-brand-cst');
+    var cur = '';
+    if (sel && sel.value === '__CUSTOM__' && cst) cur = cst.value.trim();
+    else if (sel) cur = sel.value;
+
+    var opts = '<option value="">-- 请选择 --</option>';
+    for (var i = 0; i < brands.length; i++) {
+      var s = (brands[i] === cur && cur !== '__CUSTOM__') ? ' selected' : '';
+      opts += '<option value="' + esc(brands[i]) + '"' + s + '>' + esc(brands[i]) + '</option>';
+    }
+    opts += '<option value="__CUSTOM__" style="color:#1a73e8;font-style:italic">+ 自定义品牌...</option>';
+
+    var wrap = el.querySelector('.brand-custom-wrap');
+    var isCustom = (cur && brands.indexOf(cur) === -1);
+    sel.innerHTML = opts;
+    if (isCustom) {
+      sel.value = '__CUSTOM__';
+      wrap.classList.add('show');
+      if (cst) cst.value = cur;
+    } else {
+      wrap.classList.remove('show');
+      if (cst) cst.value = '';
+    }
+  }
+
+  function refreshAllBrandSelects() {
+    var items = gateListEl.querySelectorAll('.gate-item');
+    for (var i = 0; i < items.length; i++) {
+      refreshOneBrand(i + 1);
+    }
+  }
+
+  // ========== 电脑列表渲染 ==========
+  function renderPcs() {
+    var n = parseInt(getStepperVal(pcCountEl), 10);
+    if (isNaN(n) || n < 0) n = 0;
+    if (n > 30) { setStepperVal(pcCountEl, 30); n = 30; }
+
+    pcSummaryEl.className = n > 0 ? 'summary-bar show' : 'summary-bar';
+    pcSummaryEl.textContent = n > 0 ? '当前共 ' + n + ' 台电脑，请逐台填写详细信息' : '';
+
+    var prev = collectPcData();
+    var html = '';
+    for (var i = 1; i <= n; i++) {
+      var p = prev[i] || {};
+      html +=
+        '<div class="pc-item">' +
+          '<div class="pc-item-header"><span class="dot"></span>电脑 ' + i + '</div>' +
+          '<div class="pc-fields">' +
+            '<div class="form-group">' +
+              '<label>电脑编号</label>' +
+              '<input type="text" class="pc-no" value="电脑 ' + i + '" readonly style="background:#eef2f7;color:#666;">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>IP地址</label>' +
+              '<input type="text" class="pc-ip" value="' + esc(p.ip || '192.168.8.') + '" placeholder="例：192.168.1.100" oninput="validateIP(this);updateProgress()" onblur="validateIP(this,true)">' +
+              '<div class="ip-error-msg">请输入合法的 IPv4 地址</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>用途</label>' +
+              '<select class="pc-purpose" onchange="updateProgress()">' +
+                '<option value="POS"' + (p.purpose === 'POS' ? ' selected' : '') + '>POS</option>' +
+                '<option value="控制中心"' + (p.purpose === '控制中心' ? ' selected' : '') + '>控制中心</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+    pcListEl.innerHTML = html;
+  }
+  window.renderPcs = renderPcs;
+
+  function collectPcData() {
+    var d = {};
+    var items = pcListEl.querySelectorAll('.pc-item');
+    items.forEach(function(el, idx) {
+      d[idx + 1] = {
+        ip: (el.querySelector('.pc-ip') || {}).value || '',
+        purpose: (el.querySelector('.pc-purpose') || {}).value || 'POS'
+      };
+    });
+    return d;
+  }
+
+  // ========== 收费处设备渲染 ==========
+  function renderCounterDevices() {
+    var data = state.currentLotId && state.lots[state.currentLotId] ? (state.lots[state.currentLotId].data || {}).counterDevices || {} : {};
+    var customData = state.currentLotId && state.lots[state.currentLotId] ? (state.lots[state.currentLotId].data || {}).counterCustomDevices || [] : [];
+
+    // 内置设备
+    var html = '';
+    for (var i = 0; i < COUNTER_DEVICE_TYPES.length; i++) {
+      var dtype = COUNTER_DEVICE_TYPES[i];
+      var dlabel = COUNTER_DEVICE_LABELS[dtype] || dtype;
+      var dd = data[dtype] || {};
+      var checked = dd.checked ? ' checked' : '';
+      var needsIP = COUNTER_NEEDS_IP[dtype];
+      html += '<div class="dev-check-item">';
+      html += '<label class="ck-wrap"><input type="checkbox" class="counter-chk" data-dt="' + dtype + '"' + checked + ' onchange="toggleCounterExtra(this);updateProgress()">' + esc(dlabel) + '</label>';
+      html += '<div class="dev-check-extra' + (dd.checked ? ' show' : '') + '" id="counterExtra_' + dtype + '">';
+      if (needsIP) {
+        html += '<input type="text" class="counter-ip" value="' + esc(dd.ip || '') + '" placeholder="IP地址" oninput="updateProgress()" onblur="validateCounterIP(this)" style="width:160px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;">';
+        html += '<div class="ip-error-msg" style="margin-top:2px;">请输入合法的 IPv4 地址</div>';
+      }
+      html += '</div></div>';
+    }
+
+    // 自定义设备
+    for (var ci = 0; ci < customData.length; ci++) {
+      var cd = customData[ci];
+      var cChecked = cd.checked ? ' checked' : '';
+      html += '<div class="dev-check-item">';
+      html += '<label class="ck-wrap"><input type="checkbox" class="counter-chk counter-custom-chk" data-dt="__custom__' + ci + '"' + cChecked + ' onchange="toggleCounterExtra(this);updateProgress()">' + esc(cd.name) + '</label>';
+      html += '<div class="dev-check-extra' + (cd.checked ? ' show' : '') + '" id="counterExtra___custom__' + ci + '">';
+      html += '<input type="text" class="counter-ip" value="' + esc(cd.ip || '') + '" placeholder="IP地址（选填）" oninput="updateProgress()" onblur="validateCounterIP(this)" style="width:160px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;">';
+      html += '<div class="ip-error-msg" style="margin-top:2px;">请输入合法的 IPv4 地址</div>';
+      html += '</div></div>';
+    }
+
+    counterDevGroupEl.innerHTML = html;
+
+    // 自定义标签列表
+    var tagHtml = '';
+    for (var ti = 0; ti < customData.length; ti++) {
+      tagHtml += '<span class="counter-custom-tag">' + esc(customData[ti].name) + '<span class="tag-remove" onclick="removeCounterCustom(' + ti + ')" title="删除">×</span></span>';
+    }
+    counterCustomListEl.innerHTML = tagHtml;
+  }
+  window.renderCounterDevices = renderCounterDevices;
+
+  function toggleCounterExtra(cb) {
+    var dtype = cb.getAttribute('data-dt');
+    var extra = document.getElementById('counterExtra_' + dtype);
+    if (extra) {
+      if (cb.checked) extra.classList.add('show');
+      else extra.classList.remove('show');
+    }
+    updateProgress();
+  }
+  window.toggleCounterExtra = toggleCounterExtra;
+
+  function validateCounterIP(el) {
+    var parent = el.closest('.dev-check-extra');
+    var errEl = parent ? parent.querySelector('.ip-error-msg') : null;
+    var val = el.value.trim();
+    if (!val) { if (errEl) errEl.style.display = 'none'; return; }
+    if (IP_REGEX.test(val)) { if (errEl) errEl.style.display = 'none'; }
+    else { if (errEl) errEl.style.display = 'block'; }
+  }
+  window.validateCounterIP = validateCounterIP;
+
+  function collectCounterDeviceData() {
+    var d = {};
+    var chks = counterDevGroupEl.querySelectorAll('.counter-chk');
+    chks.forEach(function(cb) {
+      var dtype = cb.getAttribute('data-dt');
+      var extra = document.getElementById('counterExtra_' + dtype);
+      var ipEl = extra ? extra.querySelector('.counter-ip') : null;
+      d[dtype] = { checked: cb.checked, ip: ipEl ? ipEl.value.trim() : '' };
+    });
+    return d;
+  }
+
+  function collectCounterCustomData() {
+    var current = state.currentLotId && state.lots[state.currentLotId] ? (state.lots[state.currentLotId].data || {}).counterCustomDevices || [] : [];
+    var result = [];
+    for (var i = 0; i < current.length; i++) {
+      var cd = current[i];
+      var extra = document.getElementById('counterExtra___custom__' + i);
+      var ipEl = extra ? extra.querySelector('.counter-ip') : null;
+      var chk = counterDevGroupEl.querySelector('.counter-chk[data-dt="__custom__' + i + '"]');
+      result.push({ name: cd.name, checked: chk ? chk.checked : false, ip: ipEl ? ipEl.value.trim() : '' });
+    }
+    return result;
+  }
+
+  // 自定义设备管理
+  window.toggleCounterCustom = function(headerEl) {
+    var body = headerEl.parentElement.querySelector('.counter-custom-body');
+    var icon = headerEl.querySelector('.toggle-icon');
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      icon.textContent = '▲';
+    } else {
+      body.style.display = 'none';
+      icon.textContent = '▼';
+    }
+  };
+
+  window.addCounterCustom = function() {
+    var input = document.getElementById('counterCustomName');
+    var name = input.value.trim();
+    if (!name) return;
+    saveCurrentSilent();
+    var lot = state.lots[state.currentLotId];
+    if (!lot.data) lot.data = {};
+    if (!lot.data.counterCustomDevices) lot.data.counterCustomDevices = [];
+    lot.data.counterCustomDevices.push({ name: name, checked: false, ip: '' });
+    renderCounterDevices();
+    input.value = '';
+    saveCurrentSilent();
+    updateProgress();
+  };
+
+  window.removeCounterCustom = function(idx) {
+    saveCurrentSilent();
+    var lot = state.lots[state.currentLotId];
+    if (!lot || !lot.data || !lot.data.counterCustomDevices) return;
+    lot.data.counterCustomDevices.splice(idx, 1);
+    renderCounterDevices();
+    saveCurrentSilent();
+    updateProgress();
+  };
+
+  // ========== 票机设备 — 通道化渲染 ==========
+  function renderDevChannels() {
+    var n = parseInt(getStepperVal(devChannelCountEl), 10);
+    if (isNaN(n) || n < 0) n = 0;
+    if (n > 30) { setStepperVal(devChannelCountEl, 30); n = 30; }
+
+    devChannelSummaryEl.className = n > 0 ? 'summary-bar show' : 'summary-bar';
+    devChannelSummaryEl.textContent = n > 0 ? '当前共 ' + n + ' 条票机通道，请逐条填写' : '';
+
+    var prev = collectDevChannelData();
+    var prevKeys = Object.keys(prev).map(Number);
+    var lastChIdx = prevKeys.length > 0 ? Math.max.apply(null, prevKeys) : 0;
+    var html = '';
+
+    for (var i = 1; i <= n; i++) {
+      // 自动复制：新通道(索引 > 旧通道数) 从上一通道复制数据
+      var ch = prev[i] || {};
+      if (!prev[i] && i > 1 && prev[i - 1]) {
+        ch = JSON.parse(JSON.stringify(prev[i - 1]));
+        ch.name = '票机通道 ' + i;
+      }
+      var wasCollapsed = blocksCollapsed[i] === true;
+      html +=
+        '<div class="dev-channel-block' + (wasCollapsed ? ' collapsed' : '') + '" data-ch="' + i + '">' +
+          '<div class="dev-channel-header" onclick="toggleChannelCollapse(this)"><span class="dot"></span>' + esc(ch.name || '票机通道 ' + i) + '<span class="toggle-icon">&#9660;</span></div>' +
+          '<div class="dev-channel-fields">' +
+            '<div class="form-group">' +
+              '<label>通道名称</label>' +
+              '<input type="text" class="dev-ch-name" value="' + esc(ch.name || '票机通道 ' + i) + '" placeholder="票机通道 ' + i + '" oninput="updateProgress()">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>票机台数</label>' +
+              '<div class="stepper dev-ch-machine-count" data-min="0" data-max="20" data-ch="' + i + '">' +
+              '<button class="stepper-btn stepper-minus" onclick="stepperDown(this);var s=this.closest(\'.stepper\');var ci=parseInt(s.getAttribute(\'data-ch\'));renderDevMachines(ci);updateProgress()">&#8722;</button>' +
+              '<span class="stepper-val">' + esc(ch.machineCount || '0') + '</span>' +
+              '<button class="stepper-btn stepper-plus" onclick="stepperUp(this);var s=this.closest(\'.stepper\');var ci=parseInt(s.getAttribute(\'data-ch\'));renderDevMachines(ci);updateProgress()">+</button>' +
+            '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="dev-machine-list" id="devMachines_' + i + '"></div>' +
+        '</div>';
+    }
+    devChannelListEl.innerHTML = html;
+
+    for (var j = 1; j <= n; j++) {
+      var ch2 = prev[j] || {};
+      var mc = parseInt(ch2.machineCount || '0', 10) || 0;
+      if (mc > 0) renderDevMachines(j, mc, ch2.machines || {});
+    }
+  }
+  window.renderDevChannels = renderDevChannels;
+
+  window.renderDevMachines = function(chIdx, forcedCount, prevMachines) {
+    var block = devChannelListEl.querySelector('.dev-channel-block[data-ch="' + chIdx + '"]');
+    if (!block) return;
+    var listEl = document.getElementById('devMachines_' + chIdx);
+    if (!listEl) return;
+
+    var countEl = block.querySelector('.dev-ch-machine-count');
+    var mc = forcedCount !== undefined ? forcedCount : parseInt(countEl ? getStepperVal(countEl) : '0', 10);
+    if (isNaN(mc) || mc < 0) mc = 0;
+    if (mc > 20) { setStepperVal(countEl, 20); mc = 20; }
+
+    var prev = prevMachines || collectDevMachinesData(chIdx);
+    var html = '';
+
+    for (var m = 1; m <= mc; m++) {
+      var pm = prev[m] || {};
+      html += '<div class="dev-machine-item"><div class="dev-machine-item-header">票机 ' + m + '</div><div class="dev-checkbox-group">';
+      for (var dt = 0; dt < DEVICE_TYPES.length; dt++) {
+        var dtype = DEVICE_TYPES[dt];
+        var dlabel = DEVICE_LABELS[dtype];
+        var needsIP = DEVICE_NEEDS_IP[dtype];
+        var hint = DEVICE_HINT[dtype];
+        var devData = pm[dtype] || {};
+        var checked = devData.checked ? ' checked' : '';
+        var ipVal = needsIP ? ' value="' + esc(devData.ip || '192.168.8.') + '"' : '';
+        var remVal = devData.remark || '';
+
+        var extraCls = (checked || (needsIP && ipVal) || remVal) ? ' show' : '';
+        html += '<div class="dev-check-item">' +
+          '<label class="ck-wrap"><input type="checkbox" class="dev-chk" data-ch="' + chIdx + '" data-m="' + m + '" data-dt="' + dtype + '"' + checked + ' onchange="toggleDevExtra(this);updateProgress()">' + esc(dlabel) + '</label>' +
+          '<div class="dev-check-extra' + extraCls + '" id="extra_' + chIdx + '_' + m + '_' + dtype + '">';
+        if (needsIP) {
+          html += '<input type="text" class="dev-chk-ip" placeholder="IP地址" data-ch="' + chIdx + '" data-m="' + m + '" data-dt="' + dtype + '"' + ipVal + ' oninput="updateProgress()">';
+        }
+        html += '<textarea class="dev-chk-remark" placeholder="' + esc(hint) + '" data-ch="' + chIdx + '" data-m="' + m + '" data-dt="' + dtype + '" oninput="updateProgress()">' + esc(remVal) + '</textarea>' +
+          '</div></div>';
+      }
+      html += '</div></div>';
+    }
+    listEl.innerHTML = html;
+  };
+
+  window.toggleDevExtra = function(cb) {
+    var ch = cb.getAttribute('data-ch');
+    var m = cb.getAttribute('data-m');
+    var dt = cb.getAttribute('data-dt');
+    var extra = document.getElementById('extra_' + ch + '_' + m + '_' + dt);
+    if (!extra) return;
+    if (cb.checked) extra.classList.add('show');
+    else {
+      var ipEl = extra.querySelector('.dev-chk-ip');
+      var remEl = extra.querySelector('.dev-chk-remark');
+      if (ipEl) ipEl.value = '';
+      if (remEl) remEl.value = '';
+      extra.classList.remove('show');
+    }
+    updateProgress();
+  };
+
+  function collectDevMachinesData(chIdx) {
+    var d = {};
+    var listEl = document.getElementById('devMachines_' + chIdx);
+    if (!listEl) return d;
+    var items = listEl.querySelectorAll('.dev-machine-item');
+    items.forEach(function(el, mIdx) {
+      var mNum = mIdx + 1;
+      d[mNum] = {};
+      var chks = el.querySelectorAll('.dev-chk');
+      chks.forEach(function(cb) {
+        var dt = cb.getAttribute('data-dt');
+        var ch = cb.getAttribute('data-ch');
+        var m = cb.getAttribute('data-m');
+        var extra = document.getElementById('extra_' + ch + '_' + m + '_' + dt);
+        var ip = '';
+        var remark = '';
+        if (extra) {
+          var ipEl = extra.querySelector('.dev-chk-ip');
+          var remEl = extra.querySelector('.dev-chk-remark');
+          if (ipEl) ip = ipEl.value.trim();
+          if (remEl) remark = remEl.value.trim();
+        }
+        d[mNum][dt] = { checked: cb.checked, ip: ip, remark: remark };
+      });
+    });
+    return d;
+  }
+
+  function collectDevChannelData() {
+    var d = {};
+    var blocks = devChannelListEl.querySelectorAll('.dev-channel-block');
+    blocks.forEach(function(block) {
+      var chIdx = block.getAttribute('data-ch');
+      var countEl = block.querySelector('.dev-ch-machine-count');
+      d[chIdx] = {
+        name: (block.querySelector('.dev-ch-name') || {}).value || ('票机通道 ' + chIdx),
+        machineCount: countEl ? getStepperVal(countEl) : '0',
+        machines: collectDevMachinesData(chIdx)
+      };
+    });
+    return d;
+  }
+
+  // ========== 停车场详细信息汇总 ==========
+  function renderSummary() {
+    var panel = document.getElementById('lotSummary');
+    var body = document.getElementById('lotSummaryBody');
+    if (!panel || !body) return;
+
+    var lotName = document.getElementById('lotName').value.trim();
+    var lotCompany = document.getElementById('lotCompany').value.trim();
+    var hasName = !!lotName;
+
+    // 判断是否有任何数据
+    var hasData = hasName;
+    var html = '';
+
+    if (!hasData) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+
+    // === 基本 ===
+    html += '<div class="sum-section">';
+    html += '<div class="sum-sec-title">基本信息</div>';
+    html += '<table class="sum-table"><tr><td class="sum-label">名称</td><td class="sum-val"><strong>' + esc(lotName || '未设置') + '</strong></td></tr>';
+    if (lotCompany) {
+      html += '<tr><td class="sum-label">管理公司</td><td class="sum-val">' + esc(lotCompany) + '</td></tr>';
+    }
+
+    var mainIP = document.getElementById('mainIP').value.trim();
+    var mainSun = document.getElementById('mainSun').value.trim();
+    var mainOS = document.getElementById('mainOS').value;
+    var backupIP = document.getElementById('backupIP').value.trim();
+    var backupSun = document.getElementById('backupSun').value.trim();
+    var backupOS = document.getElementById('backupOS').value;
+    if (mainIP) hasData = true;
+    if (mainSun || mainOS) html += '<tr><td class="sum-label">主服务器</td><td class="sum-val">' + esc(mainIP || '-') + (mainSun ? ' / 向日葵 ' + esc(mainSun) : '') + (mainOS ? ' / ' + esc(mainOS) : '') + '</td></tr>';
+    if (backupIP || backupSun || backupOS) html += '<tr><td class="sum-label">备用服务器</td><td class="sum-val">' + esc(backupIP || '-') + (backupSun ? ' / 向日葵 ' + esc(backupSun) : '') + (backupOS ? ' / ' + esc(backupOS) : '') + '</td></tr>';
+    html += '</table></div>';
+
+    // === 电脑 ===
+    var pcCount = parseInt(getStepperVal(document.getElementById('pcCount')), 10) || 0;
+    if (pcCount > 0) {
+      hasData = true;
+      html += '<div class="sum-section"><div class="sum-sec-title">收费处电脑（共 ' + pcCount + ' 台）</div>';
+      var pcItems = document.querySelectorAll('#pcList .pc-item');
+      pcItems.forEach(function(el, idx) {
+        var ip = (el.querySelector('.pc-ip') || {}).value || '-';
+        var purpose = (el.querySelector('.pc-purpose') || {}).value || '-';
+        html += '<div class="sum-sub-item"><span style="font-weight:600;color:#1a73e8;">电脑 ' + (idx + 1) + '</span> &nbsp; IP: ' + esc(ip) + ' &nbsp; 用途: ' + esc(purpose) + '</div>';
+      });
+      html += '</div>';
+    }
+
+    // === 收费处设备 ===
+    var devChks = counterDevGroupEl.querySelectorAll('.counter-chk:checked');
+    if (devChks.length > 0) {
+      hasData = true;
+      html += '<div class="sum-section"><div class="sum-sec-title">收费处设备</div>';
+      devChks.forEach(function(cb) {
+        var dtype = cb.getAttribute('data-dt');
+        var extra = document.getElementById('counterExtra_' + dtype);
+        var ipEl = extra ? extra.querySelector('.counter-ip') : null;
+        var ip = ipEl ? ipEl.value.trim() : '';
+        var label = dtype.indexOf('__custom__') === 0 ? (cb.parentElement.textContent || dtype) : (COUNTER_DEVICE_LABELS[dtype] || dtype);
+        html += '<span class="sum-badge dev-board">' + esc(label);
+        if (ip) html += ' ' + esc(ip);
+        html += '</span> ';
+      });
+      html += '</div>';
+    }
+
+    // === 出入口 ===
+    var gateCount = parseInt(getStepperVal(document.getElementById('gateCount')), 10) || 0;
+    if (gateCount > 0) {
+      hasData = true;
+      html += '<div class="sum-section"><div class="sum-sec-title">出入口闸机（共 ' + gateCount + ' 条通道）</div>';
+      var gateItems = document.querySelectorAll('#gateList .gate-item');
+      gateItems.forEach(function(el, idx) {
+        var no = (el.querySelector('.gate-no') || {}).value || '-';
+        var gateType = (el.querySelector('.gate-type-sel') || {}).value || '';
+        var mainLen = (el.querySelector('.gate-main-len') || {}).value || '';
+        var secLen = (el.querySelector('.gate-sec-len') || {}).value || '';
+        var w = (el.querySelector('.gate-w') || {}).value || '-';
+        var h = (el.querySelector('.gate-h') || {}).value || '-';
+        var brand = '';
+        var sel = el.querySelector('.gate-brand-sel');
+        if (sel) {
+          if (sel.value === '__CUSTOM__') {
+            var cst = el.querySelector('.gate-brand-cst');
+            brand = cst ? cst.value.trim() : '';
+          } else {
+            brand = sel.value || '';
+          }
+        }
+        html += '<div class="sum-sub-item"><span style="font-weight:600;color:#1a73e8;">通道 ' + (idx + 1) + '</span>';
+        html += ' &nbsp; 编号: ' + esc(no);
+        if (gateType) html += ' &nbsp; 种类: ' + esc(gateType);
+        html += ' &nbsp; ' + esc(w) + ' × ' + esc(h) + ' cm';
+        if (mainLen) html += ' &nbsp; 主杆: ' + esc(mainLen) + 'm';
+        if (secLen) html += ' &nbsp; 副杆: ' + esc(secLen) + 'm';
+        if (brand) html += ' &nbsp; 品牌: ' + esc(brand);
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // === 票机设备 ===
+    var devChCount = parseInt(getStepperVal(devChannelCountEl), 10) || 0;
+    if (devChCount > 0) {
+      hasData = true;
+      // 排序权重：主板=0, 摄像头=1, 对讲=2, RFID=3, 其余=9
+      var sortOrder = { board: 0, camera: 1, intercom: 2, rfid: 3 };
+      function getDevSort(dt) { return sortOrder.hasOwnProperty(dt) ? sortOrder[dt] : 9; }
+      function getDevColor(dt) {
+        if (dt === 'board') return 'dev-board';
+        if (dt === 'camera') return 'dev-camera';
+        if (dt === 'intercom') return 'dev-intercom';
+        if (dt === 'rfid') return 'dev-rfid';
+        return 'dev-other';
+      }
+
+      html += '<div class="sum-section"><div class="sum-sec-title">票机设备（共 ' + devChCount + ' 条通道）</div>';
+      var blocks = devChannelListEl.querySelectorAll('.dev-channel-block');
+      blocks.forEach(function(block) {
+        var chIdx = block.getAttribute('data-ch');
+        var nameEl = block.querySelector('.dev-ch-name');
+        var chName = nameEl ? nameEl.value : ('票机通道 ' + chIdx);
+        html += '<div class="sum-sub-item" style="margin-bottom:8px;"><strong>' + esc(chName) + '</strong>';
+
+        var machineItems = block.querySelectorAll('.dev-machine-item');
+        if (machineItems.length === 0) {
+          html += ' <span class="sum-empty">无票机</span>';
+        } else {
+          html += '<br>';
+          machineItems.forEach(function(mItem, mIdx) {
+            html += '<span style="color:#666;">票机 ' + (mIdx + 1) + '：</span>';
+            // 收集所有已勾选且有 IP 的设备
+            var devs = [];
+            var allChks = mItem.querySelectorAll('.dev-chk:checked');
+            allChks.forEach(function(cb) {
+              var dt = cb.getAttribute('data-dt');
+              var c = cb.getAttribute('data-ch');
+              var m = cb.getAttribute('data-m');
+              var extra = document.getElementById('extra_' + c + '_' + m + '_' + dt);
+              var ip = '';
+              if (extra) {
+                var ipEl = extra.querySelector('.dev-chk-ip');
+                if (ipEl) ip = ipEl.value.trim();
+              }
+              // 只显示有 IP 的设备
+              if (ip) {
+                devs.push({ dt: dt, ip: ip });
+              }
+            });
+            if (devs.length === 0) {
+              html += ' <span class="sum-empty">无IP设备</span>';
+            } else {
+              // 按主板 → 摄像头 → 对讲 → 其他排序
+              devs.sort(function(a, b) { return getDevSort(a.dt) - getDevSort(b.dt); });
+              var tags = [];
+              devs.forEach(function(d) {
+                var label = DEVICE_LABELS[d.dt] || d.dt;
+                var cls = getDevColor(d.dt);
+                tags.push('<span class="sum-badge ' + cls + '">' + esc(label) + ' ' + esc(d.ip) + '</span>');
+              });
+              html += tags.join(' ');
+            }
+            if (mIdx < machineItems.length - 1) html += '<br>';
+          });
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // === 澳门地图 ===
+    var lat = document.getElementById('mapLat').value.trim();
+    var lng = document.getElementById('mapLng').value.trim();
+    if (lat || lng) {
+      html += '<div class="sum-section"><div class="sum-sec-title">澳门地图坐标</div>';
+      html += '<table class="sum-table"><tr><td class="sum-label">纬度</td><td class="sum-val">' + esc(lat || '-') + '</td><td class="sum-label">经度</td><td class="sum-val">' + esc(lng || '-') + '</td></tr></table>';
+      html += '</div>';
+    }
+
+    body.innerHTML = html;
+    if (!hasData) panel.style.display = 'none';
+  }
+
+  // ========== 表单读写 ==========
+  function readForm() {
+    return {
+      mainIP: document.getElementById('mainIP').value.trim(),
+      mainSun: document.getElementById('mainSun').value.trim(),
+      mainOS: document.getElementById('mainOS').value,
+      backupIP: document.getElementById('backupIP').value.trim(),
+      backupSun: document.getElementById('backupSun').value.trim(),
+      backupOS: document.getElementById('backupOS').value,
+      pcCount: getStepperVal(document.getElementById('pcCount')).trim(),
+      pcs: collectPcData(),
+      counterDevices: collectCounterDeviceData(),
+      counterCustomDevices: collectCounterCustomData(),
+      devices: {
+        channelCount: getStepperVal(devChannelCountEl).trim(),
+        channels: collectDevChannelData()
+      },
+      gateCount: getStepperVal(document.getElementById('gateCount')).trim(),
+      gates: collectGateData()
+    };
+  }
+
+  function writeForm(data, brandMap) {
+    document.getElementById('mainIP').value = data.mainIP || '';
+    document.getElementById('mainSun').value = data.mainSun || '';
+    document.getElementById('mainOS').value = data.mainOS || '';
+    document.getElementById('backupIP').value = data.backupIP || '';
+    document.getElementById('backupSun').value = data.backupSun || '';
+    document.getElementById('backupOS').value = data.backupOS || '';
+    setStepperVal(document.getElementById('pcCount'), data.pcCount || '0');
+    renderPcs();
+
+    var dv = data.devices || {};
+    setStepperVal(devChannelCountEl, dv.channelCount || '0');
+    renderDevChannels();
+
+    if (dv.channels) {
+      setTimeout(function() {
+        var blocks = devChannelListEl.querySelectorAll('.dev-channel-block');
+        blocks.forEach(function(block) {
+          var chIdx = block.getAttribute('data-ch');
+          var chData = dv.channels[chIdx];
+          if (!chData) return;
+          var nameEl = block.querySelector('.dev-ch-name');
+          var countEl = block.querySelector('.dev-ch-machine-count');
+          if (nameEl) nameEl.value = chData.name || ('票机通道 ' + chIdx);
+          if (countEl) setStepperVal(countEl, chData.machineCount || '0');
+          var mc = parseInt(chData.machineCount || '0', 10) || 0;
+          if (mc > 0) renderDevMachines(parseInt(chIdx), mc, chData.machines || {});
+        });
+      }, 50);
+    }
+
+    setStepperVal(document.getElementById('gateCount'), data.gateCount || '0');
+    renderGates(brandMap);
+    if (data.gates) {
+      setTimeout(function() {
+        var items = gateListEl.querySelectorAll('.gate-item');
+        items.forEach(function(el, idx) {
+          var g = data.gates[idx + 1];
+          if (!g) return;
+          var no = el.querySelector('.gate-no');
+          var typeSel = el.querySelector('.gate-type-sel');
+          var mainLen = el.querySelector('.gate-main-len');
+          var secLen = el.querySelector('.gate-sec-len');
+          var w = el.querySelector('.gate-w');
+          var h = el.querySelector('.gate-h');
+          var sel = el.querySelector('.gate-brand-sel');
+          if (no) no.value = g.no || '';
+          if (typeSel) typeSel.value = g.type || '';
+          if (mainLen) mainLen.value = g.mainLength || '';
+          if (secLen) secLen.value = g.secLength || '';
+          if (w) w.value = g.width || '';
+          if (h) h.value = g.height || '';
+          if (sel) {
+            var bm = (brandMap && brandMap[idx + 1]) ? brandMap[idx + 1] : (g.brand || '');
+            var brands = getBrands();
+            if (bm && brands.indexOf(bm) === -1 && bm !== '__CUSTOM__') {
+              sel.value = '__CUSTOM__';
+              var wrap = el.querySelector('.brand-custom-wrap');
+              var cst = el.querySelector('.gate-brand-cst');
+              if (wrap) wrap.classList.add('show');
+              if (cst) cst.value = bm;
+            }
+          }
+        });
+      }, 50);
+    }
+    if (data.pcs) {
+      setTimeout(function() {
+        var pitems = pcListEl.querySelectorAll('.pc-item');
+        pitems.forEach(function(el, idx) {
+          var p = data.pcs[idx + 1];
+          if (!p) return;
+          var ip = el.querySelector('.pc-ip');
+          var pur = el.querySelector('.pc-purpose');
+          if (ip) ip.value = p.ip || '';
+          if (pur) pur.value = p.purpose || 'POS';
+        });
+      }, 50);
+    }
+
+    // 重新校验所有 IP 字段
+    setTimeout(function() {
+      var allIPs = document.querySelectorAll('#mainIP, #backupIP');
+      allIPs.forEach(function(el) { validateIP(el, true); });
+      var pcIPs = document.querySelectorAll('.pc-ip');
+      pcIPs.forEach(function(el) { validateIP(el, true); });
+    }, 200);
+
+    // 恢复收费处设备（始终渲染以显示默认勾选区）
+    renderCounterDevices();
+
+    renderBrandMgr();
+    setTimeout(function() { renderSummary(); }, 100);
+  }
+
+  function clearForm() {
+    document.getElementById('mainIP').value = '';
+    document.getElementById('mainSun').value = '';
+    document.getElementById('backupIP').value = '';
+    document.getElementById('backupSun').value = '';
+    setStepperVal(document.getElementById('pcCount'), '0');
+    setStepperVal(document.getElementById('gateCount'), '0');
+    renderPcs();
+    renderGates();
+
+    setStepperVal(devChannelCountEl, '0');
+    renderDevChannels();
+
+    // 清除所有 IP 校验状态
+    var allInvalid = document.querySelectorAll('.input-invalid');
+    allInvalid.forEach(function(el) { el.classList.remove('input-invalid'); });
+    var allErrors = document.querySelectorAll('.ip-error-msg.show');
+    allErrors.forEach(function(el) { el.classList.remove('show'); });
+    renderSummary();
+  }
+
+  // ========== IP 格式校验 ==========
+  function validateIP(el, onBlur) {
+    var val = el.value.trim();
+    var errEl = el.parentElement.querySelector('.ip-error-msg');
+    
+    if (!val) {
+      el.classList.remove('input-invalid');
+      if (errEl) errEl.classList.remove('show');
+      return true;
+    }
+
+    var valid = IP_REGEX.test(val);
+    if (!valid) {
+      el.classList.add('input-invalid');
+      if (errEl) errEl.classList.add('show');
+    } else {
+      el.classList.remove('input-invalid');
+      if (errEl) errEl.classList.remove('show');
+    }
+    return valid;
+  }
+
+  // ========== 进度条 ==========
+  function updateProgress() {
+    var visibleFields = [];
+
+    function addField(sel, isEmpty) {
+      var el = typeof sel === 'string' ? document.querySelector(sel) : sel;
+      if (!el) return;
+      // 检查是否被折叠
+      var card = el.closest('.card');
+      if (card && card.classList.contains('card-collapsed')) return;
+      visibleFields.push({ el: el, isEmpty: isEmpty || false });
+    }
+
+    function val(el) {
+      if (el.classList && el.classList.contains('stepper')) return getStepperVal(el);
+      if (el.classList && el.classList.contains('stepper-val')) return el.textContent.trim();
+      return (el.value || '').trim();
+    }
+
+    // 停车场名称
+    addField('#lotName');
+
+    // 收费处
+    addField('#mainIP', function(e) { var v = val(e); return !v || IP_REGEX.test(v); });
+    addField('#mainSun');
+    addField('#backupIP', function(e) { var v = val(e); return !v || IP_REGEX.test(v); });
+    addField('#backupSun');
+    addField('#pcCount');
+
+    var pcItems = document.querySelectorAll('#pcList .pc-item');
+    pcItems.forEach(function(item) {
+      addField(item.querySelector('.pc-ip'), function(e) { var v = val(e); return !v || IP_REGEX.test(v); });
+      addField(item.querySelector('.pc-purpose'));
+    });
+
+    // 票机设备
+    addField('#devChannelCount');
+    var devBlocks = document.querySelectorAll('#devChannelList .dev-channel-block');
+    devBlocks.forEach(function(block) {
+      addField(block.querySelector('.dev-ch-name'));
+      addField(block.querySelector('.dev-ch-machine-count'));
+      var machines = block.querySelectorAll('.dev-machine-item');
+      machines.forEach(function(mach) {
+        var chks = mach.querySelectorAll('.dev-chk');
+        chks.forEach(function(cb) {
+          // 用 checkbox checked 作为字段
+          var wrapper = cb.closest('.dev-check-item');
+          addField(cb);
+        });
+      });
+    });
+
+    // 出入口
+    addField('#gateCount');
+    var gateItems = document.querySelectorAll('#gateList .gate-item');
+    gateItems.forEach(function(item) {
+      addField(item.querySelector('.gate-no'));
+      addField(item.querySelector('.gate-w'));
+      addField(item.querySelector('.gate-h'));
+      addField(item.querySelector('.gate-brand-sel'));
+    });
+
+    var total = visibleFields.length;
+    if (total === 0) { total = 1; }
+
+    var filled = 0;
+    visibleFields.forEach(function(f) {
+      var el = f.el;
+      if (el.type === 'checkbox') {
+        if (el.checked) filled++;
+      } else if (el.tagName === 'SELECT') {
+        if (val(el) && val(el) !== '__CUSTOM__') filled++;
+        else if (val(el) === '__CUSTOM__') {
+          // 检查自定义输入
+          var cst = el.parentElement.querySelector('.gate-brand-cst');
+          if (cst && cst.value.trim()) filled++;
+        }
+      } else {
+        var v = val(el);
+        var isStepper = el.classList && el.classList.contains('stepper');
+        if (v && (!isStepper || parseInt(v) > 0)) {
+          if (f.isEmpty && typeof f.isEmpty === 'function') {
+            if (f.isEmpty(el)) filled++;
+          } else {
+            filled++;
+          }
+        }
+      }
+    });
+
+    var pct = Math.round((filled / total) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = pct + '%';
+  }
+  window.updateProgress = updateProgress;
+
+  // ========== 卡片折叠 ==========
+  window.toggleCard = function(header) {
+    var card = header.closest('.card');
+    if (!card) return;
+    card.classList.toggle('card-collapsed');
+    updateProgress();
+  };
+
+  // ========== 停车场管理 ==========
+
+  function renderDropdown(filter) {
+    var q = (filter || '').toLowerCase();
+    var h = '';
+    for (var i = 0; i < state.lotIds.length; i++) {
+      var id = state.lotIds[i];
+      var lot = state.lots[id];
+      var name = (lot && lot.name) || ('停车场 ' + (i + 1));
+      var company = (lot && lot.company) || '';
+      var locked = lot && lot.locked;
+      if (q && name.toLowerCase().indexOf(q) === -1 && company.toLowerCase().indexOf(q) === -1) continue;
+      var cls = (id === state.currentLotId) ? ' current' : '';
+      var companyHtml = company ? '<span class="lot-dd-company">' + esc(company) + '</span>' : '';
+      var lockedHtml = locked ? '<span class="lot-dd-locked">&#128274;</span>' : '';
+      h += '<div class="lot-dd-item' + cls + '" data-id="' + id + '" onclick="switchLot(\'' + id + '\')" ondblclick="renameLotDD(event,\'' + id + '\')">' +
+        '<span class="lot-dd-name">' + esc(name) + '</span>' + lockedHtml + companyHtml +
+        '<span class="lot-dd-del" onclick="event.stopPropagation();deleteLot(\'' + id + '\')" title="删除">&#10005;</span>' +
+      '</div>';
+    }
+    if (!h) h = '<div class="lot-dd-empty">无匹配的停车场</div>';
+    lotSearchDropdownEl.innerHTML = h;
+    // Show/hide dropdown
+    if (filter !== undefined) {
+      lotSearchDropdownEl.classList.add('show');
+    }
+  }
+
+  // Click outside closes dropdown
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('lotSearchWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      lotSearchDropdownEl.classList.remove('show');
+      lotSearchEl.value = '';
+    }
+  });
+
+  // Focus on search shows all
+  lotSearchEl.addEventListener('focus', function() {
+    renderDropdown(lotSearchEl.value);
+  });
+
+  // Input filters dropdown
+  lotSearchEl.addEventListener('input', function() {
+    renderDropdown(lotSearchEl.value);
+  });
+
+  // Enter to switch
+  lotSearchEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      var items = lotSearchDropdownEl.querySelectorAll('.lot-dd-item');
+      if (items.length === 1) {
+        var id = items[0].getAttribute('data-id');
+        switchLot(id);
+      }
+    }
+  });
+
+  function refreshLotNav() {
+    // Called after add/delete/clone to keep dropdown up to date
+    // No-op: dropdown renders on demand
+  }
+
+  // ========== 停车场重命名（双击下拉项） ==========
+  window.renameLotDD = function(e, id) {
+    e.stopPropagation();
+    var item = e.currentTarget;
+    if (item.querySelector('.lot-dd-rn-input')) return;
+    var nameEl = item.querySelector('.lot-dd-name');
+    var currentName = nameEl.textContent;
+    nameEl.innerHTML = '';
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'lot-dd-rn-input';
+    input.value = currentName;
+    nameEl.appendChild(input);
+    input.focus();
+    input.select();
+
+    var commit = function() {
+      var newName = input.value.trim() || currentName;
+      var lot = state.lots[id];
+      if (lot) { lot.name = newName; lotNameEl.value = newName; saveState(); updateProgress(); }
+      renderDropdown(lotSearchEl.value);
+      showToast('已重命名为「' + newName + '」', 'success');
+    };
+
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', function(ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+      else if (ev.key === 'Escape') { input.value = currentName; input.blur(); }
+    });
+  };
+
+  window.switchLot = function(id) {
+    if (id === state.currentLotId) { lotSearchDropdownEl.classList.remove('show'); lotSearchEl.value = ''; return; }
+    saveCurrentSilent();
+    state.currentLotId = id;
+    saveState();
+    loadLot(id);
+    lotSearchDropdownEl.classList.remove('show');
+    lotSearchEl.value = '';
+    updateProgress();
+    showSaveIndicator();
+  };
+
+  // ========== 停车场复制 ==========
+  window.cloneLot = function() {
+    if (!state.currentLotId) {
+      showToast('没有可复制的停车场', 'error');
+      return;
+    }
+    saveCurrentSilent();
+    var src = state.lots[state.currentLotId];
+    if (!src) return;
+    var newId = newId();
+    var newName = (src.name || '停车场') + ' 副本';
+    // 深拷贝数据
+    var clonedData = JSON.parse(JSON.stringify(src.data || {}));
+    var clonedBrands = (src.brands || PRESET_BRANDS.slice()).slice();
+    state.lotIds.push(newId);
+    state.lots[newId] = {
+      id: newId,
+      name: newName,
+      company: src.company || '',
+      brands: clonedBrands,
+      data: clonedData,
+      brandMap: src.brandMap ? JSON.parse(JSON.stringify(src.brandMap)) : {},
+      locked: false
+    };
+    state.currentLotId = newId;
+    saveState();
+    loadLot(newId);
+    updateProgress();
+    showToast('已复制为「' + newName + '」', 'success');
+  };
+
+  window.addLot = function() {
+    saveCurrentSilent();
+    var id = newId();
+    var name = '停车场 ' + (state.lotIds.length + 1);
+    state.lotIds.push(id);
+    state.lots[id] = { id: id, name: name, company: '', brands: PRESET_BRANDS.slice(), data: {}, locked: false };
+    state.currentLotId = id;
+    saveState();
+    loadLot(id);
+    updateProgress();
+    showToast('已新增「' + name + '」', 'success');
+  };
+
+  window.deleteLot = function(id) {
+    var lot = state.lots[id];
+    var name = lot ? lot.name : '未知';
+    if (!confirm('确定删除「' + name + '」及其所有数据？不可恢复。')) return;
+    var idx = state.lotIds.indexOf(id);
+    if (idx > -1) state.lotIds.splice(idx, 1);
+    delete state.lots[id];
+    if (state.currentLotId === id) {
+      state.currentLotId = state.lotIds.length > 0 ? state.lotIds[0] : null;
+    }
+    saveState();
+    if (state.currentLotId) loadLot(state.currentLotId); else { clearForm(); lotNameEl.value = ''; lotLockBtnEl.className = 'lot-lock-btn'; }
+    updateProgress();
+    showToast('已删除「' + name + '」', 'info');
+  };
+
+  window.deleteCurrentLot = function() {
+    if (!state.currentLotId) { showToast('没有可删除的停车场', 'error'); return; }
+    deleteLot(state.currentLotId);
+  };
+
+  function loadLot(id) {
+    var lot = state.lots[id];
+    if (!lot) { clearForm(); lotNameEl.value = ''; lotCompanyEl.value = ''; updateProgress(); document.body.classList.remove('locked-mode'); return; }
+    lotNameEl.value = lot.name || '';
+    lotCompanyEl.value = lot.company || '';
+    writeForm(lot.data || {}, lot.brandMap || {});
+    applyLockState(!!lot.locked);
+    renderBrandMgr();
+    updateProgress();
+  }
+
+  function saveCurrentSilent() {
+    if (!state.currentLotId) return;
+    var lot = state.lots[state.currentLotId];
+    if (!lot) return;
+    lot.name = lotNameEl.value.trim() || ('停车场 ' + (state.lotIds.indexOf(state.currentLotId) + 1));
+    lot.company = lotCompanyEl.value.trim();
+    lot.data = readForm();
+    var bm = {};
+    var items = gateListEl.querySelectorAll('.gate-item');
+    items.forEach(function(el, idx) {
+      var sel = el.querySelector('.gate-brand-sel');
+      if (sel) {
+        bm[idx + 1] = (sel.value === '__CUSTOM__') ? ((el.querySelector('.gate-brand-cst') || {}).value || '').trim() : sel.value;
+      }
+    });
+    lot.brandMap = bm;
+    saveState();
+    renderSummary();
+  }
+
+  // ========== 锁定功能 ==========
+  function applyLockState(locked) {
+    if (locked) {
+      document.body.classList.add('locked-mode');
+      lotLockBtnEl.classList.add('locked');
+      lotLockBtnEl.innerHTML = '&#128274;';
+    } else {
+      document.body.classList.remove('locked-mode');
+      lotLockBtnEl.classList.remove('locked');
+      lotLockBtnEl.innerHTML = '&#128275;';
+    }
+  }
+
+  window.toggleLock = function() {
+    if (!state.currentLotId) return;
+    var lot = state.lots[state.currentLotId];
+    if (!lot) return;
+    lot.locked = !lot.locked;
+    saveState();
+    applyLockState(!!lot.locked);
+    var name = lot.name || '';
+    showToast(lot.locked ? '「' + name + '」已锁定' : '「' + name + '」已解锁', 'info');
+  };
+
+  window.saveCurrent = function() {
+    saveCurrentSilent();
+    if (!(state.currentLotId && state.lots[state.currentLotId])) return;
+    var name = state.lots[state.currentLotId].name;
+    showToast('「' + name + '」已保存', 'success');
+  };
+
+  // ========== 管理公司改名（同步所有同公司停车场） ==========
+  window.renameCompany = function() {
+    if (!state.currentLotId) return;
+    var newCompany = lotCompanyEl.value.trim();
+    var currentLot = state.lots[state.currentLotId];
+    if (!currentLot) return;
+    var oldCompany = currentLot.company || '';
+    if (newCompany === oldCompany) return;
+    currentLot.company = newCompany;
+    // 同步所有同名公司的停车场
+    if (oldCompany) {
+      for (var i = 0; i < state.lotIds.length; i++) {
+        var lot = state.lots[state.lotIds[i]];
+        if (lot && lot.company === oldCompany && state.lotIds[i] !== state.currentLotId) {
+          lot.company = newCompany;
+        }
+      }
+    }
+    saveState();
+  };  // renameCompany
+
+  // ========== 导入/导出（Excel） ==========
+  window.exportAll = function() {
+    saveCurrentSilent();
+    if (!window.XLSX) { showToast('Excel 组件未加载，请检查网络后刷新页面', 'error'); return; }
+
+    var wb = XLSX.utils.book_new();
+
+    // Sheet 1: 总览
+    var overviewRows = [['停车场名称', '管理公司', '停车场ID', '锁定', '品牌列表', '主机IP', '主机子网掩码', '主机OS', '备机IP', '备机子网掩码', '备机OS', '电脑数量', '票机通道数量', '车道数量']];
+    for (var i = 0; i < state.lotIds.length; i++) {
+      var id = state.lotIds[i];
+      var lot = state.lots[id];
+      var d = lot.data || {};
+      overviewRows.push([
+        lot.name, lot.company || '', id, lot.locked ? '是' : '否', (lot.brands || []).join(', '),
+        d.mainIP || '', d.mainSun || '', d.mainOS || '',
+        d.backupIP || '', d.backupSun || '', d.backupOS || '',
+        String(Object.keys(d.pcs || {}).length),
+        String(Object.keys((d.devices && d.devices.channels) || {}).length),
+        String(Object.keys(d.gates || {}).length)
+      ]);
+    }
+    var wsOverview = XLSX.utils.aoa_to_sheet(overviewRows);
+    wsOverview['!cols'] = [{wch:18},{wch:22},{wch:25},{wch:6},{wch:16},{wch:16},{wch:10},{wch:16},{wch:16},{wch:10},{wch:10},{wch:14},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, wsOverview, '总览');
+
+    // Sheet 2: 票机设备
+    var devRows = [['停车场', '通道序号', '通道名称', '票机序号', '设备类型', '状态', 'IP地址', '备注']];
+    for (var j = 0; j < state.lotIds.length; j++) {
+      var lid = state.lotIds[j];
+      var lot2 = state.lots[lid];
+      var d2 = lot2.data || {};
+      var dv = d2.devices || {};
+      var chs = dv.channels || {};
+      var chKeys = Object.keys(chs).map(Number).sort(function(a,b){return a-b;});
+      for (var ci2 = 0; ci2 < chKeys.length; ci2++) {
+        var ci = chKeys[ci2];
+        var ch = chs[ci] || {};
+        var ms = ch.machines || {};
+        var mKeys = Object.keys(ms).map(Number).sort(function(a,b){return a-b;});
+        for (var mi2 = 0; mi2 < mKeys.length; mi2++) {
+          var mi = mKeys[mi2];
+          var m = ms[mi] || {};
+          for (var dt = 0; dt < DEVICE_TYPES.length; dt++) {
+            var dtype = DEVICE_TYPES[dt];
+            var dd = m[dtype] || {};
+            devRows.push([
+              lot2.name, ci, ch.name || ('票机通道 ' + ci), mi,
+              DEVICE_LABELS[dtype] || dtype, dd.checked ? '✓' : '✗',
+              dd.ip || '', dd.remark || ''
+            ]);
+          }
+        }
+      }
+    }
+    var wsDev = XLSX.utils.aoa_to_sheet(devRows);
+    wsDev['!cols'] = [{wch:18},{wch:10},{wch:16},{wch:10},{wch:16},{wch:8},{wch:18},{wch:24}];
+    XLSX.utils.book_append_sheet(wb, wsDev, '票机设备');
+
+    // Sheet 3: 车道设备
+    var gateRows = [['停车场', '车道序号', '车道名称', '闸机种类', '主杆长度(m)', '副杆长度(m)', '品牌', '宽度', '高度']];
+    for (var k = 0; k < state.lotIds.length; k++) {
+      var gid = state.lotIds[k];
+      var lot3 = state.lots[gid];
+      var d3 = lot3.data || {};
+      var gates = d3.gates || {};
+      var gKeys = Object.keys(gates).map(Number).sort(function(a,b){return a-b;});
+      for (var gi2 = 0; gi2 < gKeys.length; gi2++) {
+        var gi = gKeys[gi2];
+        var g = gates[gi] || {};
+        gateRows.push([lot3.name, gi, g.no || '', g.type || '', g.mainLength || '', g.secLength || '', g.brand || '', g.width || '', g.height || '']);
+      }
+    }
+    var wsGate = XLSX.utils.aoa_to_sheet(gateRows);
+    wsGate['!cols'] = [{wch:18},{wch:10},{wch:16},{wch:12},{wch:12},{wch:12},{wch:14},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, wsGate, '车道设备');
+
+    // Sheet 4: 电脑
+    var pcRows = [['停车场', '序号', 'IP地址', '用途']];
+    for (var p = 0; p < state.lotIds.length; p++) {
+      var pid = state.lotIds[p];
+      var lot4 = state.lots[pid];
+      var d4 = lot4.data || {};
+      var pcs = d4.pcs || {};
+      var pcKeys = Object.keys(pcs).map(Number).sort(function(a,b){return a-b;});
+      for (var pi2 = 0; pi2 < pcKeys.length; pi2++) {
+        var pi = pcKeys[pi2];
+        var pc = pcs[pi] || {};
+        pcRows.push([lot4.name, pi, pc.ip || '', pc.purpose || 'POS']);
+      }
+    }
+    var wsPc = XLSX.utils.aoa_to_sheet(pcRows);
+    wsPc['!cols'] = [{wch:18},{wch:8},{wch:18},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, wsPc, '电脑');
+
+    // Sheet 5: 收费处设备
+    var cdrRows = [['停车场', '设备类型', '设备名称', '状态', 'IP地址']];
+    for (var q = 0; q < state.lotIds.length; q++) {
+      var qid = state.lotIds[q];
+      var lot5 = state.lots[qid];
+      var d5 = lot5.data || {};
+      var cdv = d5.counterDevices || {};
+      for (var cdt = 0; cdt < COUNTER_DEVICE_TYPES.length; cdt++) {
+        var cdtKey = COUNTER_DEVICE_TYPES[cdt];
+        var cdItem = cdv[cdtKey] || {};
+        cdrRows.push([lot5.name, cdtKey, COUNTER_DEVICE_LABELS[cdtKey] || cdtKey, cdItem.checked ? '✓' : '✗', cdItem.ip || '']);
+      }
+      // 自定义设备
+      var cdCustom = d5.counterCustomDevices || [];
+      for (var cci = 0; cci < cdCustom.length; cci++) {
+        cdrRows.push([lot5.name, '__custom__', cdCustom[cci].name, cdCustom[cci].checked ? '✓' : '✗', cdCustom[cci].ip || '']);
+      }
+    }
+    var wsCdr = XLSX.utils.aoa_to_sheet(cdrRows);
+    wsCdr['!cols'] = [{wch:18},{wch:18},{wch:16},{wch:8},{wch:18}];
+    XLSX.utils.book_append_sheet(wb, wsCdr, '收费处设备');
+
+    XLSX.writeFile(wb, 'parking_info_all_' + dts() + '.xlsx');
+    showToast('全部停车场数据已导出为 Excel', 'success');
+  };
+
+  window.importJSON = function() {
+    document.getElementById('importFileInput').click();
+  };
+
+  // 存储待导入数据
+  var pendingImportData = null;
+
+  window.handleImportFile = function(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    if (!window.XLSX) { showToast('Excel 组件未加载，请检查网络后刷新页面', 'error'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        var json = parseExcelToJSON(wb);
+        if (!json.parkingLots || !Array.isArray(json.parkingLots)) {
+          showToast('Excel 格式不正确，缺少「总览」工作表', 'error');
+          return;
+        }
+        pendingImportData = json;
+        document.getElementById('importModal').classList.add('show');
+      } catch(ex) {
+        showToast('Excel 解析失败：' + ex.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    event.target.value = '';
+  };
+
+  function parseExcelToJSON(wb) {
+    var result = { parkingLots: [] };
+
+    // 读取总览 sheet
+    var overviewSheet = wb.Sheets['总览'] || wb.Sheets[Object.keys(wb.Sheets)[0]];
+    var overviewData = XLSX.utils.sheet_to_json(overviewSheet, { header: 1 });
+    if (overviewData.length < 2) return result;
+
+    // 跳过表头，读取每行
+    for (var i = 1; i < overviewData.length; i++) {
+      var row = overviewData[i];
+      var lotName = (row[0] || '').toString().trim();
+      var lotCompany = (row[1] || '').toString().trim();
+      var lotId = (row[2] || '').toString().trim();
+      if (!lotName && !lotId) continue;
+      if (!lotId) lotId = 'lot_' + Date.now() + '_' + i;
+
+      var locked = (row[3] || '').toString().trim();
+      locked = (locked === '是' || locked === 'true' || locked === '1');
+
+      var brands = [];
+      if (row[4]) { brands = row[4].toString().split(/[,，、]/).map(function(s){ return s.trim(); }).filter(Boolean); }
+      if (brands.length === 0) brands = PRESET_BRANDS.slice();
+
+      result.parkingLots.push({
+        id: lotId,
+        name: lotName,
+        company: lotCompany,
+        locked: locked,
+        brands: brands,
+        data: {
+          mainIP: row[5] || '',
+          mainSun: row[6] || '',
+          mainOS: row[7] || '',
+          backupIP: row[8] || '',
+          backupSun: row[9] || '',
+          backupOS: row[10] || '',
+          pcCount: row[11] || '0',
+          devices: { channelCount: row[13] || '0', channels: {} },
+          gateCount: row[14] || '0',
+          gates: {}, pcs: {}
+        }
+      });
+    }
+
+    // 读取票机设备 sheet
+    var devSheet = wb.Sheets['票机设备'];
+    if (devSheet) {
+      var devData = XLSX.utils.sheet_to_json(devSheet, { header: 1 });
+      for (var di = 1; di < devData.length; di++) {
+        var dr = devData[di];
+        if (!dr || dr.length < 4) continue;
+        var lotName2 = (dr[0] || '').toString().trim();
+        var chIdx = parseInt(dr[1], 10) || 1;
+        var chName = (dr[2] || '').toString().trim();
+        var mIdx = parseInt(dr[3], 10) || 1;
+        var devTypeLabel = (dr[4] || '').toString().trim();
+        var checked = (dr[5] || '').toString().trim() === '✓';
+        var ip = dr[6] || '';
+        var remark = dr[7] || '';
+
+        // 反向查找设备类型
+        var dtype = '';
+        for (var key in DEVICE_LABELS) {
+          if (DEVICE_LABELS[key] === devTypeLabel) { dtype = key; break; }
+        }
+        if (!dtype && DEVICE_TYPES.length > 0) {
+          dtype = DEVICE_TYPES[0]; // fallback
+        }
+        if (!dtype) continue;
+
+        // 找到对应停车场
+        for (var pi2 = 0; pi2 < result.parkingLots.length; pi2++) {
+          if (result.parkingLots[pi2].name === lotName2) {
+            var pd = result.parkingLots[pi2].data;
+            var pdd = pd.devices || {};
+            pdd.channelCount = pdd.channelCount || '0';
+            pdd.channels = pdd.channels || {};
+            if (!pdd.channels[chIdx]) {
+              pdd.channels[chIdx] = { name: chName, machineCount: '0', machines: {} };
+            }
+            var chObj = pdd.channels[chIdx];
+            chObj.name = chObj.name || chName;
+            if (!chObj.machines[mIdx]) {
+              chObj.machines[mIdx] = {};
+              var curMC = parseInt(chObj.machineCount || '0', 10) || 0;
+              if (mIdx > curMC) chObj.machineCount = String(mIdx);
+            }
+            if (!chObj.machines[mIdx][dtype]) {
+              chObj.machines[mIdx][dtype] = { checked: false, ip: '', remark: '' };
+            }
+            chObj.machines[mIdx][dtype] = { checked: checked, ip: String(ip || ''), remark: String(remark || '') };
+            break;
+          }
+        }
+      }
+    }
+
+    // 读取车道设备 sheet
+    var gateSheet = wb.Sheets['车道设备'];
+    if (gateSheet) {
+      var gateData = XLSX.utils.sheet_to_json(gateSheet, { header: 1 });
+      for (var gi = 1; gi < gateData.length; gi++) {
+        var gr = gateData[gi];
+        if (!gr || gr.length < 2) continue;
+        var lotName3 = (gr[0] || '').toString().trim();
+        var gIdx = parseInt(gr[1], 10) || 1;
+        for (var pi3 = 0; pi3 < result.parkingLots.length; pi3++) {
+          if (result.parkingLots[pi3].name === lotName3) {
+            var gd = result.parkingLots[pi3].data;
+            gd.gates = gd.gates || {};
+            gd.gates[gIdx] = {
+              no: String(gr[2] || ''),
+              type: String(gr[3] || ''),
+              mainLength: String(gr[4] || ''),
+              secLength: String(gr[5] || ''),
+              brand: String(gr[6] || ''),
+              width: String(gr[7] || ''),
+              height: String(gr[8] || '')
+            };
+            var curGC = parseInt(gd.gateCount || '0', 10) || 0;
+            if (gIdx > curGC) gd.gateCount = String(gIdx);
+            break;
+          }
+        }
+      }
+    }
+
+    // 读取电脑 sheet
+    var pcSheet = wb.Sheets['电脑'];
+    if (pcSheet) {
+      var pcData = XLSX.utils.sheet_to_json(pcSheet, { header: 1 });
+      for (var pci = 1; pci < pcData.length; pci++) {
+        var pr = pcData[pci];
+        if (!pr || pr.length < 2) continue;
+        var lotName4 = (pr[0] || '').toString().trim();
+        var pcIdx = parseInt(pr[1], 10) || 1;
+        for (var pi4 = 0; pi4 < result.parkingLots.length; pi4++) {
+          if (result.parkingLots[pi4].name === lotName4) {
+            var pcd = result.parkingLots[pi4].data;
+            pcd.pcs = pcd.pcs || {};
+            pcd.pcs[pcIdx] = { ip: String(pr[2] || ''), purpose: String(pr[3] || 'POS') };
+            var curPC = parseInt(pcd.pcCount || '0', 10) || 0;
+            if (pcIdx > curPC) pcd.pcCount = String(pcIdx);
+            break;
+          }
+        }
+      }
+    }
+
+    // 读取收费处设备 sheet
+    var cdrSheet = wb.Sheets['收费处设备'];
+    if (cdrSheet) {
+      var cdrData = XLSX.utils.sheet_to_json(cdrSheet, { header: 1 });
+      for (var cdr = 1; cdr < cdrData.length; cdr++) {
+        var cr = cdrData[cdr];
+        if (!cr || cr.length < 3) continue;
+        var lotName5 = (cr[0] || '').toString().trim();
+        var devType = (cr[1] || '').toString().trim();
+        var devName = (cr[2] || '').toString().trim();
+        var checked = (cr[3] || '').toString().trim() === '✓';
+        var ip = cr[4] || '';
+        for (var pi5 = 0; pi5 < result.parkingLots.length; pi5++) {
+          if (result.parkingLots[pi5].name === lotName5) {
+            var cdd = result.parkingLots[pi5].data;
+            if (devType === '__custom__') {
+              cdd.counterCustomDevices = cdd.counterCustomDevices || [];
+              cdd.counterCustomDevices.push({ name: devName, checked: checked, ip: String(ip || '') });
+            } else {
+              cdd.counterDevices = cdd.counterDevices || {};
+              cdd.counterDevices[devType] = { checked: checked, ip: String(ip || '') };
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // 智能合并：逐字段对比，只覆盖有修改的内容
+  function deepEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return a == b;
+    if (typeof a !== typeof b) return false;
+    if (typeof a === 'object') {
+      if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) return false;
+        for (var k = 0; k < a.length; k++) { if (!deepEqual(a[k], b[k])) return false; }
+        return true;
+      }
+      var keysA = Object.keys(a), keysB = Object.keys(b);
+      if (keysA.length !== keysB.length) return false;
+      for (var k2 = 0; k2 < keysA.length; k2++) {
+        if (!(keysA[k2] in b) || !deepEqual(a[keysA[k2]], b[keysA[k2]])) return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function smartMergeImport(json) {
+    var updated = 0, added = 0, unchanged = 0;
+    // 统计导入中的 lot ID
+    var importIds = {};
+    for (var i = 0; i < json.parkingLots.length; i++) {
+      importIds[json.parkingLots[i].id] = true;
+    }
+    // 保留不在导入中的本地 lot
+    var keepIds = [];
+    for (var j = 0; j < state.lotIds.length; j++) {
+      if (!importIds[state.lotIds[j]]) keepIds.push(state.lotIds[j]);
+    }
+    // 处理导入数据中的每个 lot
+    var finalLotIds = keepIds.slice(); // 先加入保留的
+    for (var m = 0; m < json.parkingLots.length; m++) {
+      var imp = json.parkingLots[m];
+      if (state.lots[imp.id]) {
+        // 已存在：逐字段对比
+        var local = state.lots[imp.id];
+        var hasChange = false;
+        // 基础字段
+        if (local.name !== imp.name) { local.name = imp.name; hasChange = true; }
+        if ((local.company || '') !== (imp.company || '')) { local.company = imp.company || ''; hasChange = true; }
+        if ((local.locked || false) !== (imp.locked || false)) { local.locked = !!imp.locked; hasChange = true; }
+        if (!deepEqual(local.brands, imp.brands)) { local.brands = imp.brands || PRESET_BRANDS.slice(); hasChange = true; }
+        // data 字段逐层对比
+        var impData = imp.data || {};
+        var locData = local.data || {};
+        var locDataNew = {};
+        // 复制本地 data
+        for (var dk in locData) { locDataNew[dk] = deepCopy(locData[dk]); }
+        // 合并导入的 data
+        for (var ik in impData) {
+          if (!(ik in locDataNew)) {
+            locDataNew[ik] = deepCopy(impData[ik]);
+            hasChange = true;
+          } else if (!deepEqual(locDataNew[ik], impData[ik])) {
+            locDataNew[ik] = deepCopy(impData[ik]);
+            hasChange = true;
+          }
+        }
+        if (hasChange) {
+          local.data = locDataNew;
+          updated++;
+        } else {
+          unchanged++;
+        }
+        finalLotIds.push(imp.id);
+      } else {
+        // 新 lot
+        var brands = imp.brands || PRESET_BRANDS.slice();
+        state.lots[imp.id] = { id: imp.id, name: imp.name, company: imp.company || '', locked: !!imp.locked, brands: brands, data: imp.data || {} };
+        finalLotIds.push(imp.id);
+        added++;
+      }
+    }
+    // 去重
+    var seen = {};
+    state.lotIds = [];
+    for (var n = 0; n < finalLotIds.length; n++) {
+      if (!seen[finalLotIds[n]]) { seen[finalLotIds[n]] = true; state.lotIds.push(finalLotIds[n]); }
+    }
+    var status = [];
+    if (updated > 0) status.push(updated + ' 个已更新');
+    if (added > 0) status.push(added + ' 个新增');
+    if (unchanged > 0) status.push(unchanged + ' 个无变化');
+    return status.join('，');
+  }
+
+  function deepCopy(obj) {
+    if (obj == null || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) {
+      var arr = [];
+      for (var ci = 0; ci < obj.length; ci++) arr.push(deepCopy(obj[ci]));
+      return arr;
+    }
+    var cp = {};
+    for (var ck in obj) cp[ck] = deepCopy(obj[ck]);
+    return cp;
+  }
+
+  // 导入对话框按钮事件
+  document.getElementById('btnMergeSmart').addEventListener('click', function() {
+    document.getElementById('importModal').classList.remove('show');
+    if (!pendingImportData) return;
+    saveCurrentSilent();
+    var msg = smartMergeImport(pendingImportData);
+    state.currentLotId = state.lotIds.length > 0 ? state.lotIds[state.lotIds.length - 1] : null;
+    saveState();
+    if (state.currentLotId) loadLot(state.currentLotId); else clearForm();
+    updateProgress();
+    showToast('智能合并完成：' + msg, 'success');
+    pendingImportData = null;
+  });
+
+  document.getElementById('btnOverwriteAll').addEventListener('click', function() {
+    document.getElementById('importModal').classList.remove('show');
+    if (!pendingImportData) return;
+    saveCurrentSilent();
+    state.lotIds = [];
+    state.lots = {};
+    doImport(pendingImportData);
+    pendingImportData = null;
+  });
+
+  document.getElementById('btnCancelImport').addEventListener('click', function() {
+    document.getElementById('importModal').classList.remove('show');
+    pendingImportData = null;
+  });
+
+  function doImport(json) {
+    for (var i = 0; i < json.parkingLots.length; i++) {
+      var lot = json.parkingLots[i];
+      state.lotIds.push(lot.id);
+      state.lots[lot.id] = { id: lot.id, name: lot.name, company: lot.company || '', locked: !!lot.locked, brands: lot.brands || PRESET_BRANDS.slice(), data: lot.data || {} };
+    }
+    state.currentLotId = json.currentLot || (state.lotIds.length > 0 ? state.lotIds[0] : null);
+    saveState();
+    if (state.currentLotId) loadLot(state.currentLotId); else clearForm();
+    updateProgress();
+    showToast('导入成功，共 ' + json.parkingLots.length + ' 个停车场', 'success');
+  }
+
+  // ========== 清空重置 / 撤销 ==========
+  window.resetAll = function() {
+    // 清除旧撤销定时器
+    if (undoTimer) { clearInterval(undoTimer); undoTimer = null; }
+
+    // 备份当前数据
+    undoBackup = {
+      name: lotNameEl.value.trim(),
+      company: lotCompanyEl.value.trim(),
+      data: readForm(),
+      brandMap: (function() {
+        var bm = {};
+        var items = gateListEl.querySelectorAll('.gate-item');
+        items.forEach(function(el, idx) {
+          var sel = el.querySelector('.gate-brand-sel');
+          if (sel) {
+            bm[idx + 1] = (sel.value === '__CUSTOM__') ? ((el.querySelector('.gate-brand-cst') || {}).value || '').trim() : sel.value;
+          }
+        });
+        return bm;
+      })()
+    };
+
+    clearForm();
+
+    // 显示撤销栏
+    var undoBar = document.getElementById('undoBar');
+    undoBar.classList.add('show');
+    undoSec = 5;
+    document.getElementById('undoCountdown').textContent = '(' + undoSec + 's)';
+
+    undoTimer = setInterval(function() {
+      undoSec--;
+      document.getElementById('undoCountdown').textContent = '(' + undoSec + 's)';
+      if (undoSec <= 0) {
+        clearInterval(undoTimer);
+        undoTimer = null;
+        undoBar.classList.remove('show');
+        undoBackup = null;
+        // 保存空数据
+        saveCurrentSilent();
+        updateProgress();
+      }
+    }, 1000);
+
+    showToast('已清空当前停车场，5秒内可撤销', 'info');
+  };
+
+  window.undoReset = function() {
+    if (!undoBackup) return;
+    if (undoTimer) { clearInterval(undoTimer); undoTimer = null; }
+    document.getElementById('undoBar').classList.remove('show');
+
+    // 恢复数据
+    lotNameEl.value = undoBackup.name || '';
+    lotCompanyEl.value = undoBackup.company || '';
+    writeForm(undoBackup.data, undoBackup.brandMap || {});
+
+    undoBackup = null;
+    saveCurrentSilent();
+    updateProgress();
+    showToast('已撤销清空操作，数据已恢复', 'success');
+  };
+
+  // ========== 预览打印 ==========
+  window.previewData = function() {
+    saveCurrentSilent();
+    var d = readForm();
+    var dg = d.gates || {};
+    var dp = d.pcs || {};
+    var rows = '';
+    var keys = Object.keys(dg).sort(function(a,b){return a-b;});
+    keys.forEach(function(k) {
+      var g = dg[k];
+      rows += '<tr><td>' + esc(k) + '</td><td>' + esc(g.no||k) + '</td><td>' + esc(g.width||'-') + '</td><td>' + esc(g.height||'-') + '</td><td>' + esc(g.brand||'-') + '</td></tr>';
+    });
+    var pcRows = '';
+    var pckeys = Object.keys(dp).sort(function(a,b){return a-b;});
+    pckeys.forEach(function(k) {
+      var p = dp[k];
+      pcRows += '<tr><td>电脑 ' + esc(k) + '</td><td>' + esc(p.ip||'-') + '</td><td>' + esc(p.purpose||'POS') + '</td></tr>';
+    });
+
+    var devRows = '';
+    var dv2 = d.devices || {};
+    var devChanData = dv2.channels || {};
+    var devChKeys = Object.keys(devChanData).sort(function(a,b){return a-b;});
+    if (devChKeys.length > 0) {
+      devRows += '<p style="font-size:0.9rem;color:#666">票机通道总数量：' + esc(dv2.channelCount||'0') + ' 条</p>';
+      devRows += '<table><thead><tr><th>设备名称</th><th>通道/票机</th><th>IP地址</th><th>备注</th></tr></thead><tbody>';
+      for (var ck = 0; ck < devChKeys.length; ck++) {
+        var ch = devChanData[devChKeys[ck]];
+        var chName = ch.name || ('票机通道 ' + devChKeys[ck]);
+        var machines = ch.machines || {};
+        var mKeys = Object.keys(machines).sort(function(a,b){return a-b;});
+        if (mKeys.length === 0) {
+          devRows += '<tr><td colspan="4" style="color:#999;background:#fafafa"><strong>' + esc(chName) + '</strong> — 暂无票机</td></tr>';
+        }
+        for (var mk = 0; mk < mKeys.length; mk++) {
+          var mach = machines[mKeys[mk]];
+          var hasAny = false;
+          for (var dt2 = 0; dt2 < DEVICE_TYPES.length; dt2++) {
+            var dtn = DEVICE_TYPES[dt2];
+            var dd = mach[dtn];
+            if (dd && dd.checked) {
+              hasAny = true;
+              devRows += '<tr><td>' + esc(DEVICE_LABELS[dtn]) + '</td><td>' + esc(chName) + ' / 票机 ' + esc(mKeys[mk]) + '</td><td>' + esc(dd.ip||'-') + '</td><td>' + esc(dd.remark||'-') + '</td></tr>';
+            }
+          }
+          if (!hasAny) {
+            devRows += '<tr><td colspan="4" style="color:#999;background:#fafafa"><strong>' + esc(chName) + '</strong> / 票机 ' + esc(mKeys[mk]) + ' — 未勾选任何设备</td></tr>';
+          }
+        }
+      }
+      devRows += '</tbody></table>';
+    } else {
+      devRows += '<p style="color:#999;text-align:center;">暂无数据</p>';
+    }
+    var htm = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>停车场信息登记表</title>' +
+      '<style>body{font-family:sans-serif;max-width:860px;margin:0 auto;padding:24px;color:#333}' +
+      'h1{text-align:center;border-bottom:2px solid #1a73e8;padding-bottom:12px;margin-bottom:20px}' +
+      'h2{color:#1a73e8;margin-top:28px;font-size:1.1rem;border-left:4px solid #1a73e8;padding-left:10px}' +
+      'h3{font-size:0.95rem;margin:10px 0 6px;color:#444}' +
+      'table{width:100%;border-collapse:collapse;margin:12px 0}' +
+      'th,td{border:1px solid #ddd;padding:10px 12px;text-align:left;font-size:0.9rem}' +
+      'th{background:#f5f5f5;font-weight:600}' +
+      '.r{display:flex;gap:24px;flex-wrap:wrap;margin:12px 0}' +
+      '.i{flex:1;min-width:180px;padding:10px;background:#f8fafc;border-radius:6px}' +
+      '.il{font-size:0.8rem;color:#666}.iv{font-size:1rem;font-weight:500}' +
+      '.sbox{background:#f0f7ff;border:1px solid #cce0ff;border-radius:8px;padding:12px 16px;margin:8px 0}' +
+      '.meta{text-align:center;color:#999;font-size:0.8rem;margin-top:30px}' +
+      '@media print{body{padding:0}@page{margin:15mm}}</style></head><body>' +
+      '<h1>停车场信息资料登记表</h1>' +
+      '<p style="text-align:center;font-size:1rem;font-weight:600;">' + esc(lotNameEl.value.trim() || '未命名') + '</p>' +
+      (lotCompanyEl.value.trim() ? '<p style="text-align:center;font-size:0.85rem;color:#666;">管理公司：' + esc(lotCompanyEl.value.trim()) + '</p>' : '') +
+      '<h2>收费处信息</h2>' +
+      '<h3>主服务器</h3><div class="sbox"><div class="r">' +
+        '<div class="i"><div class="il">IP地址</div><div class="iv">' + esc(d.mainIP||'-') + '</div></div>' +
+        '<div class="i"><div class="il">向日葵号码</div><div class="iv">' + esc(d.mainSun||'-') + '</div></div>' +
+      '</div></div>' +
+      '<h3>备用服务器</h3><div class="sbox"><div class="r">' +
+        '<div class="i"><div class="il">IP地址</div><div class="iv">' + esc(d.backupIP||'-') + '</div></div>' +
+        '<div class="i"><div class="il">向日葵号码</div><div class="iv">' + esc(d.backupSun||'-') + '</div></div>' +
+      '</div></div>' +
+      '<div class="r"><div class="i"><div class="il">电脑数量</div><div class="iv">' + esc(d.pcCount||'0') + ' 台</div></div></div>' +
+      (pcRows ? '<h3>电脑详情</h3><table><thead><tr><th>编号</th><th>IP 地址</th><th>用途</th></tr></thead><tbody>' + pcRows + '</tbody></table>' : '') +
+      '<h2>票机设备</h2>' + devRows +
+      '<h2>出入口处信息</h2>' +
+      '<p style="font-size:0.9rem;color:#666">通道总数量：' + esc(d.gateCount||'0') + ' 条</p>' +
+      '<table><thead><tr><th>序号</th><th>编号</th><th>种类</th><th>主杆(m)</th><th>副杆(m)</th><th>宽度(m)</th><th>高度(m)</th><th>闸机品牌</th></tr></thead>' +
+      '<tbody>' + (rows||'<tr><td colspan="8" style="text-align:center;color:#999">暂无数据</td></tr>') + '</tbody></table>' +
+      '<p class="meta">登记时间：' + esc(new Date().toLocaleString('zh-CN')) + '</p>' +
+      '</body></html>';
+    var w = window.open('','_blank','width=900,height=700');
+    if(!w){showToast('弹窗被拦截，请允许后再试','error');return;}
+    w.document.write(htm); w.document.close();
+    setTimeout(function(){w.print();},500);
+  };
+
+  // ========== 导出当前停车场 PDF ==========
+  window.exportPDF = function() {
+    saveCurrentSilent();
+    var d = readForm();
+    var lotName = esc(lotNameEl.value.trim() || '未命名');
+    var dg = d.gates || {};
+    var dp = d.pcs || {};
+    var dv2 = d.devices || {};
+
+    // 闸机行
+    var gateRows = '';
+    var gkeys = Object.keys(dg).sort(function(a,b){return a-b;});
+    gkeys.forEach(function(k) {
+      var g = dg[k];
+      gateRows += '<tr><td>' + esc(k) + '</td><td>' + esc(g.no||k) + '</td><td>' + esc(g.type||'-') + '</td><td>' + esc(g.mainLength||'-') + '</td><td>' + esc(g.secLength||'-') + '</td><td>' + esc(g.width||'-') + '</td><td>' + esc(g.height||'-') + '</td><td>' + esc(g.brand||'-') + '</td></tr>';
+    });
+
+    // 电脑行
+    var pcRows = '';
+    var pckeys = Object.keys(dp).sort(function(a,b){return a-b;});
+    pckeys.forEach(function(k) {
+      var p = dp[k];
+      pcRows += '<tr><td>电脑 ' + esc(k) + '</td><td>' + esc(p.ip||'-') + '</td><td>' + esc(p.purpose||'POS') + '</td></tr>';
+    });
+
+    // 票机设备行
+    var devRows = '';
+    var devChanData = dv2.channels || {};
+    var devChKeys = Object.keys(devChanData).sort(function(a,b){return a-b;});
+    if (devChKeys.length > 0) {
+      devRows += '<p style="font-size:0.9rem;color:#666">票机通道总数量：' + esc(dv2.channelCount||'0') + ' 条</p>';
+      devRows += '<table><thead><tr><th>设备名称</th><th>通道/票机</th><th>IP地址</th><th>备注</th></tr></thead><tbody>';
+      for (var ci = 0; ci < devChKeys.length; ci++) {
+        var ch = devChanData[devChKeys[ci]];
+        var chName = ch.name || ('票机通道 ' + devChKeys[ci]);
+        var machines = ch.machines || {};
+        var mKeys = Object.keys(machines).sort(function(a,b){return a-b;});
+        if (mKeys.length === 0) {
+          devRows += '<tr><td colspan="4" style="color:#999;background:#fafafa"><strong>' + esc(chName) + '</strong> — 暂无票机</td></tr>';
+        }
+        for (var mi = 0; mi < mKeys.length; mi++) {
+          var mach = machines[mKeys[mi]];
+          var hasAny = false;
+          for (var dt = 0; dt < DEVICE_TYPES.length; dt++) {
+            var dtn = DEVICE_TYPES[dt];
+            var dd = mach[dtn];
+            if (dd && dd.checked) {
+              hasAny = true;
+              devRows += '<tr><td>' + esc(DEVICE_LABELS[dtn]) + '</td><td>' + esc(chName) + ' / 票机 ' + esc(mKeys[mi]) + '</td><td>' + esc(dd.ip||'-') + '</td><td>' + esc(dd.remark||'-') + '</td></tr>';
+            }
+          }
+          if (!hasAny) {
+            devRows += '<tr><td colspan="4" style="color:#999;background:#fafafa"><strong>' + esc(chName) + '</strong> / 票机 ' + esc(mKeys[mi]) + ' — 未勾选任何设备</td></tr>';
+          }
+        }
+      }
+      devRows += '</tbody></table>';
+    } else {
+      devRows += '<p style="color:#999;text-align:center;">暂无数据</p>';
+    }
+
+    // 车场品牌
+    var brandText = '';
+    if (state && state.lots && state.lots[state.currentLotId]) {
+      var brands = state.lots[state.currentLotId].brands || [];
+      if (brands.length > 0) {
+        brandText = '<h2>车场品牌</h2>' +
+          '<div class="r">' +
+          brands.map(function(b){ return '<div class="i"><div class="iv">' + esc(b) + '</div></div>'; }).join('') +
+          '</div>';
+      }
+    }
+
+    // 地图坐标
+    var mapText = '';
+    if (state && state.lots && state.lots[state.currentLotId]) {
+      var coord = state.lots[state.currentLotId].mapCoord;
+      if (coord && coord.length === 2) {
+        mapText = '<h2>地图坐标</h2>' +
+          '<div class="r">' +
+          '<div class="i"><div class="il">纬度</div><div class="iv">' + esc(coord[0]) + '</div></div>' +
+          '<div class="i"><div class="il">经度</div><div class="iv">' + esc(coord[1]) + '</div></div>' +
+          '</div>';
+      }
+    }
+
+    var now = new Date();
+    var timeStr = now.getFullYear() + '-' +
+      ('0' + (now.getMonth()+1)).slice(-2) + '-' +
+      ('0' + now.getDate()).slice(-2) + ' ' +
+      ('0' + now.getHours()).slice(-2) + ':' +
+      ('0' + now.getMinutes()).slice(-2);
+    var safeName = lotName.replace(/[\\/:*?"<>|]/g, '_');
+
+    var htm = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">' +
+      '<title>' + safeName + ' 资料</title>' +
+      '<style>' +
+      '*{box-sizing:border-box;margin:0;padding:0}' +
+      'body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;max-width:860px;margin:0 auto;padding:30px 24px;color:#222;line-height:1.6}' +
+      'h1{text-align:center;font-size:1.4rem;border-bottom:3px solid #1a73e8;padding-bottom:14px;margin-bottom:24px;color:#1a73e8}' +
+      'h2{color:#1a73e8;font-size:1.05rem;margin-top:28px;margin-bottom:12px;border-left:4px solid #1a73e8;padding-left:10px}' +
+      'h3{font-size:0.9rem;margin:12px 0 6px;color:#555}' +
+      'table{width:100%;border-collapse:collapse;margin:10px 0 16px}' +
+      'th,td{border:1px solid #ccc;padding:9px 10px;text-align:left;font-size:0.88rem}' +
+      'th{background:#eef4fb;font-weight:600;color:#333}' +
+      '.r{display:flex;gap:20px;flex-wrap:wrap;margin:10px 0}' +
+      '.i{flex:1;min-width:160px;padding:10px 12px;background:#f8fafc;border-radius:6px;border:1px solid #e8ecf0}' +
+      '.il{font-size:0.78rem;color:#888;margin-bottom:2px}' +
+      '.iv{font-size:0.95rem;font-weight:500;color:#222}' +
+      '.sbox{background:#f0f7ff;border:1px solid #cce0ff;border-radius:8px;padding:14px 16px;margin:8px 0}' +
+      '.meta{text-align:center;color:#aaa;font-size:0.8rem;margin-top:36px;padding-top:16px;border-top:1px solid #eee}' +
+      'td:empty::after{content:"-";color:#ccc}' +
+      '@media print{body{padding:0 16px;font-size:12px}' +
+      '@page{margin:12mm;size:A4}' +
+      'h1{font-size:1.2rem}' +
+      'h2{font-size:0.95rem}' +
+      '.sbox{break-inside:avoid}' +
+      'table{break-inside:avoid}}' +
+      '</style></head><body>' +
+      '<h1>停车场信息资料</h1>' +
+      '<p style="text-align:center;font-size:1.1rem;font-weight:600;margin-bottom:20px;">' + lotName + '</p>' +
+      (lotCompanyEl.value.trim() ? '<p style="text-align:center;font-size:0.9rem;color:#666;margin-top:-12px;margin-bottom:20px;">管理公司：' + esc(lotCompanyEl.value.trim()) + '</p>' : '') +
+
+      // 收费处 - 主服务器
+      '<h2>收费处信息</h2>' +
+      '<h3>主服务器</h3>' +
+      '<div class="sbox"><div class="r">' +
+        '<div class="i"><div class="il">IP 地址</div><div class="iv">' + esc(d.mainIP||'-') + '</div></div>' +
+        '<div class="i"><div class="il">向日葵号码</div><div class="iv">' + esc(d.mainSun||'-') + '</div></div>' +
+        '<div class="i"><div class="il">操作系统</div><div class="iv">' + esc(d.mainOS||'-') + '</div></div>' +
+      '</div></div>' +
+
+      // 收费处 - 备用服务器
+      '<h3>备用服务器</h3>' +
+      '<div class="sbox"><div class="r">' +
+        '<div class="i"><div class="il">IP 地址</div><div class="iv">' + esc(d.backupIP||'-') + '</div></div>' +
+        '<div class="i"><div class="il">向日葵号码</div><div class="iv">' + esc(d.backupSun||'-') + '</div></div>' +
+        '<div class="i"><div class="il">操作系统</div><div class="iv">' + esc(d.backupOS||'-') + '</div></div>' +
+      '</div></div>' +
+
+      // 电脑
+      '<div class="r"><div class="i"><div class="il">电脑数量</div><div class="iv">' + esc(d.pcCount||'0') + ' 台</div></div></div>' +
+      (pcRows ? '<h3>电脑详情</h3><table><thead><tr><th>编号</th><th>IP 地址</th><th>用途</th></tr></thead><tbody>' + pcRows + '</tbody></table>' : '') +
+
+      // 票机设备
+      '<h2>票机设备</h2>' + devRows +
+
+      // 出入口
+      '<h2>出入口处信息</h2>' +
+      '<p style="font-size:0.9rem;color:#666;margin-bottom:8px;">通道总数量：' + esc(d.gateCount||'0') + ' 条</p>' +
+      '<table><thead><tr><th>序号</th><th>编号</th><th>种类</th><th>主杆(m)</th><th>副杆(m)</th><th>宽度(m)</th><th>高度(m)</th><th>闸机品牌</th></tr></thead>' +
+      '<tbody>' + (gateRows || '<tr><td colspan="8" style="text-align:center;color:#999">暂无数据</td></tr>') + '</tbody></table>' +
+
+      // 品牌 & 坐标
+      brandText + mapText +
+
+      '<p class="meta">资料导出时间：' + timeStr + '</p>' +
+      '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (!w) {
+      showToast('弹窗被拦截，请允许后重试', 'error');
+      return;
+    }
+    w.document.write(htm);
+    w.document.close();
+    w.focus();
+    setTimeout(function() { w.print(); }, 600);
+    showToast('PDF 导出窗口已打开，请在打印对话框中选择「另存为 PDF」', 'info');
+  };
+
+  // ========== 自动保存指示器 ==========
+  function showSaveIndicator() {
+    var el = document.getElementById('saveIndicator');
+    el.classList.add('show');
+    clearTimeout(window._siTimer);
+    window._siTimer = setTimeout(function() {
+      el.classList.remove('show');
+    }, 1500);
+  }
+
+  // ========== 工具函数 ==========
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function dts() { var n=new Date(); return n.getFullYear()+('0'+(n.getMonth()+1)).slice(-2)+('0'+n.getDate()).slice(-2)+'_'+('0'+n.getHours()).slice(-2)+('0'+n.getMinutes()).slice(-2); }
+  function showToast(msg, type) {
+    type = type || 'info';
+    clearTimeout(window._tt);
+    toastEl.className = 'toast toast-' + type;
+    toastEl.textContent = msg;
+    requestAnimationFrame(function(){toastEl.classList.add('show');});
+    window._tt = setTimeout(function(){toastEl.classList.remove('show');}, 2500);
+  }
+
+  // ========== 初始化 ==========
+    
+    
+    
+  lotNameEl.addEventListener('input', updateProgress);
+
+  // 定期更新进度（处理复选框等变更）
+  setInterval(function() { updateProgress(); }, 2000);
+
+
+
+  // ========== 键盘快捷键 ==========
+  document.addEventListener('keydown', function(e) {
+    // Ctrl+S：保存
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      saveCurrent();
+      return;
+    }
+    // Ctrl+P：打印预览
+    if (e.ctrlKey && e.key === 'p') {
+      e.preventDefault();
+      previewData();
+      return;
+    }
+  });
+
+  // ========== 启动 ==========
+  (function init() {
+    var loaded = loadState();
+    if (!loaded || state.lotIds.length === 0) {
+      var id = newId();
+      state.lotIds = [id];
+      state.lots = {};
+      state.lots[id] = { id: id, name: '停车场 1', brands: PRESET_BRANDS.slice(), data: {}, locked: false };
+      state.currentLotId = id;
+      saveState();
+    } else if (!state.currentLotId) {
+      state.currentLotId = state.lotIds[0];
+    }
+
+    if (state.currentLotId) loadLot(state.currentLotId); else clearForm();
+    updateProgress();
+  })();
+
+  // ========== 澳门地图 ==========
+  var macauCenter = [22.1987, 113.5439];
+  var mapInstance = null;
+  var mapMarker = null;
+
+  function initMap() {
+    if (typeof L === 'undefined') return;
+    var container = document.getElementById('mapContainer');
+    if (!container || mapInstance) return;
+
+    // 澳门边界：南西[22.10,113.52] 北东[22.22,113.60]
+    var macauBounds = L.latLngBounds([22.10, 113.52], [22.22, 113.60]);
+
+    mapInstance = L.map('mapContainer', {
+      attributionControl: false,
+      zoomControl: true,
+      maxBounds: macauBounds.pad(0.2),
+      minZoom: 12,
+      maxZoom: 18
+    }).setView(macauCenter, 14);
+
+    // CartoDB 瓦片源
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      subdomains: 'abcd',
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>, &copy; <a href="https://carto.com/">CARTO</a>'
+    }).addTo(mapInstance);
+
+    L.control.attribution({ position: 'bottomright', prefix: '' })
+      .setPrefix('')
+      .addAttribution('&copy; Esri, HERE, Garmin, FAO, NOAA, USGS, OpenStreetMap 贡献者')
+      .addTo(mapInstance);
+
+    mapInstance.on('click', function(e) {
+      placeMarker(e.latlng.lat, e.latlng.lng);
+    });
+
+    // 如果当前停车场已有坐标则显示
+    loadMapCoord();
+  }
+
+  function placeMarker(lat, lng) {
+    if (mapMarker) mapInstance.removeLayer(mapMarker);
+    var customIcon = L.divIcon({
+      className: 'custom-marker',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+    mapMarker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(mapInstance);
+    mapMarker.on('dragend', function() {
+      var pos = mapMarker.getLatLng();
+      document.getElementById('mapLat').value = pos.lat.toFixed(6);
+      document.getElementById('mapLng').value = pos.lng.toFixed(6);
+    });
+    document.getElementById('mapLat').value = lat.toFixed(6);
+    document.getElementById('mapLng').value = lng.toFixed(6);
+  }
+
+  window.updateMapMarker = function() {
+    var lat = parseFloat(document.getElementById('mapLat').value);
+    var lng = parseFloat(document.getElementById('mapLng').value);
+    if (isNaN(lat) || isNaN(lng)) { showToast('请输入有效经纬度', 'error'); return; }
+    placeMarker(lat, lng);
+    mapInstance.setView([lat, lng], 16);
+  };
+
+  window.resetMapView = function() {
+    if (mapInstance) {
+      var macauBounds = L.latLngBounds([22.10, 113.52], [22.22, 113.60]);
+      mapInstance.setView(macauCenter, 14);
+    }
+  };
+
+  window.saveMapCoord = function() {
+    if (!state.currentLotId) { showToast('请先选择停车场', 'error'); return; }
+    var lat = parseFloat(document.getElementById('mapLat').value);
+    var lng = parseFloat(document.getElementById('mapLng').value);
+    if (isNaN(lat) || isNaN(lng)) { showToast('请先在地图上点击或输入坐标', 'error'); return; }
+    state.lots[state.currentLotId].mapCoord = [lat, lng];
+    saveCurrentSilent();
+    showToast('坐标已保存', 'success');
+  };
+
+  function loadMapCoord() {
+    if (!state.currentLotId || !mapInstance) return;
+    var coord = state.lots[state.currentLotId].mapCoord;
+    if (coord && coord.length === 2) {
+      placeMarker(coord[0], coord[1]);
+      mapInstance.setView([coord[0], coord[1]], 16);
+    } else {
+      if (mapMarker) { mapInstance.removeLayer(mapMarker); mapMarker = null; }
+      document.getElementById('mapLat').value = '';
+      document.getElementById('mapLng').value = '';
+      mapInstance.setView(macauCenter, 14);
+    }
+  }
+
+  // 卡片展开时初始化地图（懒加载）
+  var cardMapHeader = document.querySelector('#card-map .card-header');
+  cardMapHeader.addEventListener('click', function() {
+    var card = document.getElementById('card-map');
+    if (!card.classList.contains('card-collapsed')) {
+      setTimeout(initMap, 100);
+    }
+  });
+
+  // 切换停车场时更新地图
+  var origLoadLot = loadLot;
+  loadLot = function(id) {
+    origLoadLot(id);
+    if (mapInstance) loadMapCoord();
+  };
+
+  // 页面加载完成后初始化地图
+  setTimeout(initMap, 500);
+
+  // 检测 Leaflet 是否加载成功（本地文件和 CDN 均失败时显示下载提示）
+  setTimeout(function() {
+    if (typeof L === 'undefined') {
+      var mc = document.getElementById('mapContainer');
+      var dp = document.getElementById('mapDownload');
+      if (mc) mc.style.display = 'none';
+      if (dp) dp.style.display = 'block';
+    }
+  }, 1800);
+
+  window.downloadLeafletFiles = function(btn) {
+    btn.disabled = true;
+    btn.textContent = '下载中...';
+    var files = [
+      { url: 'https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.css', name: 'leaflet.css' },
+      { url: 'https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.js', name: 'leaflet.js' }
+    ];
+    var done = 0;
+    files.forEach(function(f) {
+      fetch(f.url).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.blob();
+      }).then(function(b) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = f.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      }).catch(function() {
+        window.open(f.url, '_blank');
+      }).finally(function() {
+        done++;
+        if (done >= files.length) {
+          btn.textContent = '下载完成，请将文件放入项目文件夹后刷新';
+        }
+      });
+    });
+  };
+  // ========== 信息总览 ==========
+  var overviewMap = null;
+  var overviewMarkers = {};
+  var overviewIcons = {};
+  var ovActiveLotId = null;
+
+  var ovColors = ['#e53e3e','#dd6b20','#d69e2e','#38a169','#2b6cb0','#6b46c1','#c53030','#2c7a7b','#3c366b','#702459'];
+
+  function openOverview() {
+    saveCurrentSilent();
+    document.getElementById('overviewOverlay').classList.add('show');
+    document.getElementById('ovSearch').value = '';
+    renderOvStats();
+    renderOvList();
+    setTimeout(function() {
+      initOverviewMap();
+      placeAllMarkers();
+    }, 200);
+  }
+
+  function closeOverview() {
+    document.getElementById('overviewOverlay').classList.remove('show');
+    if (overviewMap) { overviewMap.remove(); overviewMap = null; }
+    overviewMarkers = {};
+    overviewIcons = {};
+    ovActiveLotId = null;
+  }
+
+  function initOverviewMap() {
+    if (typeof L === 'undefined') return;
+    if (overviewMap) { overviewMap.remove(); overviewMap = null; }
+    overviewMarkers = {};
+    overviewIcons = {};
+
+    var macauBounds = L.latLngBounds([22.10,113.52], [22.22,113.60]);
+    overviewMap = L.map('overviewMap', {
+      maxBounds: macauBounds.pad(0.2),
+      minZoom: 12,
+      maxZoom: 18
+    }).setView(macauCenter, 14);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd'
+    }).addTo(overviewMap);
+  }
+
+  function placeAllMarkers() {
+    if (!overviewMap) return;
+    Object.values(overviewMarkers).forEach(function(m) { overviewMap.removeLayer(m); });
+    overviewMarkers = {};
+    overviewIcons = {};
+
+    var lots = state.lotIds.map(function(id) { return { id: id, lot: state.lots[id] }; });
+    lots.forEach(function(item, idx) {
+      var coord = item.lot.mapCoord;
+      if (!coord || coord.length !== 2) return;
+      var color = ovColors[idx % ovColors.length];
+      var icon = L.divIcon({
+        className: 'ov-custom-marker',
+        html: '<div style="width:30px;height:30px;border-radius:50%;background:' + color + ';border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.7rem;">P</div>',
+        iconSize: [30,30],
+        iconAnchor: [15,15]
+      });
+      var marker = L.marker([coord[0], coord[1]], { icon: icon }).addTo(overviewMap);
+      overviewMarkers[item.id] = marker;
+
+      var d = item.lot.data || {};
+      var pcCount = d.pcs ? Object.keys(d.pcs).length : 0;
+      var devCh = d.devices && d.devices.channels ? Object.keys(d.devices.channels).length : 0;
+      var gateCnt = d.gateCount || 0;
+      var infoHtml = '<b>' + (item.lot.name || item.id) + '</b>' +
+        (item.lot.company ? '<br><small style="color:#666;">' + esc(item.lot.company) + '</small>' : '') +
+        '<br><small>闸机: ' + gateCnt + '  |  电脑: ' + pcCount + '  |  票机通道: ' + devCh + '</small>';
+      marker.bindPopup(infoHtml);
+      marker.on('mouseover', function() { marker.openPopup(); });
+      marker.on('mouseout', function() { setTimeout(function() { if (!marker._popupMouseOver) marker.closePopup(); }, 300); });
+      marker.on('popupopen', function() {
+        var popup = marker.getPopup();
+        if (!popup) return;
+        var el = popup.getElement();
+        if (!el) return;
+        el.addEventListener('mouseenter', function() { marker._popupMouseOver = true; });
+        el.addEventListener('mouseleave', function() { marker._popupMouseOver = false; marker.closePopup(); });
+      });
+      marker.on('click', function() {
+        highlightLotInList(item.id);
+      });
+    });
+
+    var allMarkers = Object.values(overviewMarkers);
+    if (allMarkers.length > 0) {
+      var group = L.featureGroup(allMarkers);
+      overviewMap.fitBounds(group.getBounds().pad(0.15), { maxZoom: 15 });
+    }
+  }
+
+  function renderOvStats() {
+    var lots = state.lotIds.map(function(id) { return state.lots[id]; });
+    var totalLots = lots.length;
+    var totalGates = 0;
+    var totalPcs = 0;
+    var totalDevChannels = 0;
+    var totalDevMachines = 0;
+
+    lots.forEach(function(lot) {
+      var d = lot.data || {};
+      totalGates += parseInt(d.gateCount, 10) || 0;
+      if (d.pcs) { totalPcs += Object.keys(d.pcs).length; }
+      if (d.devices && d.devices.channels) {
+        var chs = d.devices.channels;
+        totalDevChannels += Object.keys(chs).length;
+        Object.values(chs).forEach(function(ch) {
+          var mc = parseInt(ch.machineCount, 10) || 0;
+          totalDevMachines += mc;
+        });
+      }
+    });
+
+    document.getElementById('ovStats').innerHTML =
+      '<div class="ov-stat-card"><div class="num">' + totalLots + '</div><div class="lbl">停车场</div></div>' +
+      '<div class="ov-stat-card"><div class="num">' + totalGates + '</div><div class="lbl">闸机通道</div></div>' +
+      '<div class="ov-stat-card"><div class="num">' + totalPcs + '</div><div class="lbl">收费电脑</div></div>' +
+      '<div class="ov-stat-card"><div class="num">' + totalDevMachines + '</div><div class="lbl">票机设备</div></div>';
+  }
+
+  function renderOvList(filter) {
+    var list = document.getElementById('ovList');
+    var lots = state.lotIds.map(function(id, idx) {
+      return { id: id, lot: state.lots[id], idx: idx };
+    });
+
+    if (filter) {
+      var q = filter.toLowerCase();
+      lots = lots.filter(function(item) { return (item.lot.name || '').toLowerCase().indexOf(q) >= 0 || (item.lot.company || '').toLowerCase().indexOf(q) >= 0; });
+    }
+
+    var html = '';
+    if (lots.length === 0) {
+      html = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:0.85rem;">暂无匹配的停车场</div>';
+    } else {
+      lots.forEach(function(item) {
+        var d = item.lot.data || {};
+        var pcCount = d.pcs ? Object.keys(d.pcs).length : 0;
+        var devCh = d.devices && d.devices.channels ? Object.keys(d.devices.channels).length : 0;
+        var gateCnt = d.gateCount || 0;
+        var hasCoord = item.lot.mapCoord && item.lot.mapCoord.length === 2;
+        var activeClass = (item.id === ovActiveLotId) ? ' active' : '';
+        html += '<div class="ov-lot-item' + activeClass + '" data-lot-id="' + item.id + '"' +
+          ' onclick="highlightLotOnMap(\'' + item.id + '\')"' +
+          ' onmouseenter="highlightLotMarker(\'' + item.id + '\', true)"' +
+          ' onmouseleave="highlightLotMarker(\'' + item.id + '\', false)">' +
+          '<div class="ov-lot-icon" style="background:' + (ovColors[item.idx % ovColors.length]) + ';">P</div>' +
+          '<div class="ov-lot-name">' + (item.lot.name || item.id) + (item.lot.company ? '<small style="color:#666;display:block;font-size:0.7rem;">' + esc(item.lot.company) + '</small>' : '') + '</div>' +
+          '<div class="ov-lot-info">闸' + gateCnt + ' 电' + pcCount + ' 票' + devCh + (hasCoord ? '' : ' <span class="ov-no-coord">[未定位]</span>') + '</div>' +
+          '</div>';
+      });
+    }
+    list.innerHTML = html;
+  }
+
+  function filterOvList() {
+    var q = document.getElementById('ovSearch').value;
+    renderOvList(q);
+  }
+
+  function jumpToLot() {
+    var q = (document.getElementById('ovSearch').value || '').toLowerCase();
+    var lots = state.lotIds.map(function(id, idx) { return { id: id, lot: state.lots[id], idx: idx }; });
+    if (q) {
+      lots = lots.filter(function(item) { return (item.lot.name || '').toLowerCase().indexOf(q) >= 0 || (item.lot.company || '').toLowerCase().indexOf(q) >= 0; });
+    }
+    if (lots.length > 0) {
+      highlightLotOnMap(lots[0].id);
+    }
+  }
+
+  function highlightLotOnMap(lotId) {
+    ovActiveLotId = lotId;
+    renderOvList(document.getElementById('ovSearch').value);
+    if (!overviewMap) return;
+    var marker = overviewMarkers[lotId];
+    if (!marker) return;
+    overviewMap.setView(marker.getLatLng(), 16);
+    marker.openPopup();
+  }
+
+  function highlightLotMarker(lotId, on) {
+    var marker = overviewMarkers[lotId];
+    if (!marker) return;
+    if (on) {
+      marker._origIcon = marker.getIcon();
+      var highlightIcon = L.divIcon({
+        className: 'ov-custom-marker',
+        html: '<div style="width:36px;height:36px;border-radius:50%;background:#ffd700;border:4px solid #fff;box-shadow:0 0 14px rgba(255,215,0,0.8);display:flex;align-items:center;justify-content:center;color:#333;font-weight:700;font-size:0.8rem;">P</div>',
+        iconSize: [36,36],
+        iconAnchor: [18,18]
+      });
+      marker.setIcon(highlightIcon);
+      marker.openPopup();
+    } else {
+      if (marker._origIcon) { marker.setIcon(marker._origIcon); }
+      setTimeout(function() { if (!ovActiveLotId || ovActiveLotId !== lotId) marker.closePopup(); }, 200);
+    }
+  }
+
+  function highlightLotInList(lotId) {
+    ovActiveLotId = lotId;
+    renderOvList(document.getElementById('ovSearch').value);
+    var item = document.querySelector('.ov-lot-item[data-lot-id="' + lotId + '"]');
+    if (item) item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  window.openOverview = openOverview;
+  window.closeOverview = closeOverview;
+  window.filterOvList = filterOvList;
+  window.jumpToLot = jumpToLot;
+  window.highlightLotOnMap = highlightLotOnMap;
+  window.highlightLotMarker = highlightLotMarker;
+  window.highlightLotInList = highlightLotInList;
+})();
+</script>
+
+<!-- 操作按钮/Toast 额外样式 -->
+<style>
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: center;
+  }
+  .btn {
+    height: 42px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(26,86,219,0.25);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  }
+  .btn-success {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(16,185,129,0.25);
+  }
+  .btn-danger {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(239,68,68,0.2);
+  }
+  .btn-del {
+    background: #fff;
+    color: #ef4444;
+    border: 1.5px solid #fecaca;
+  }
+  .btn-del:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+  }
+  .btn-outline {
+    background: #fff;
+    color: var(--primary);
+    border: 1.5px solid var(--border);
+  }
+  .btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .btn-cancel {
+    background: #f1f5f9;
+    color: var(--text-secondary);
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 28px;
+    border-radius: 24px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateX(-50%) translateY(-10px);
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast-info    { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+  .toast-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+  .toast-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+  .summary-bar {
+    font-size: 0.82rem;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 8px 14px;
+    border-radius: 8px;
+    margin: 8px 0 12px;
+    display: none;
+    font-weight: 500;
+  }
+  .summary-bar.show { display: block; }
+
+  /* ===== 撤销栏 ===== */
+  .undo-bar {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    margin-top: 12px;
+    animation: slideIn 0.3s ease;
+  }
+  .undo-bar.show { display: flex; }
+  .undo-msg { font-size: 0.85rem; color: #92400e; font-weight: 500; }
+  .undo-countdown { font-size: 0.8rem; color: #92400e; font-weight: 600; min-width: 32px; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== 导入对话框 ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 28px 30px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+    animation: modalIn 0.25s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .modal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .modal-body {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+  .modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* ===== 自动保存指示器 ===== */
+  .save-indicator {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+  }
+  .save-indicator.show {
+    opacity: 1;
+    animation: saveFadeIn 0.3s ease, saveFadeOut 0.5s ease 1s forwards;
+  }
+  @keyframes saveFadeIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes saveFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+</style>
+
+<div class="footer">&copy; 2026 金达资讯科技技术有限公司 | 开发：光仔</div>
+
+<script src="./leaflet.js"></script>
+<script>if(typeof L==='undefined'){document.write('<script src="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.js"><\/script>');}</script>
+<script src="https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- 信息总览弹窗 -->
+<div class="overview-overlay" id="overviewOverlay">
+  <div class="overview-panel">
+    <div class="ov-header">
+      <h2>&#128205; 停车场信息总览</h2>
+      <button class="ov-close" onclick="closeOverview()" title="关闭">&#10005;</button>
+    </div>
+    <div class="ov-body">
+      <div class="ov-left">
+        <div class="ov-stats" id="ovStats"></div>
+        <div class="ov-list-header">停车场列表（点击定位 / 回车跳转）</div>
+        <input type="text" id="ovSearch" placeholder="搜索停车场或管理公司..." autocomplete="off"
+               style="margin:6px 12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.82rem;flex-shrink:0;"
+               oninput="filterOvList()" onkeydown="if(event.key==='Enter')jumpToLot()">
+        <div class="ov-list" id="ovList"></div>
+      </div>
+      <div class="ov-right"><div id="overviewMap"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="page-footer">光仔 制作</div>
+
+</body>
+</html>

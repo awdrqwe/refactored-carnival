@@ -1,0 +1,19 @@
+-- 在 Supabase SQL Editor 中执行以下 SQL：
+-- https://supabase.com/dashboard/project/unulmtdacleljqtuggfp/sql/new
+
+-- 1. 创建用户权限表
+CREATE TABLE profiles (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('super_admin', 'editor', 'viewer')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. 创建默认超级管理员（密码: admin123，首次登录后请立即修改）
+INSERT INTO profiles (username, password_hash, role) 
+VALUES ('admin', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'super_admin');
+
+-- 3. 禁用 profiles 表的 RLS（允许前端直接读写）
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+（内容由AI生成，仅供参考）

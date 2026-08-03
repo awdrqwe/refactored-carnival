@@ -1,0 +1,19 @@
+{
+  "lotIds": [
+    "a1"
+  ],
+  "currentLotId": "a1",
+  "lots": {
+    "a1": {
+      "id": "a1",
+      "name": "测试停车场",
+      "brands": [
+        "万胜"
+      ],
+      "data": {
+        "mainIP": "10.0.0.1",
+        "mainOS": "Linux"
+      }
+    }
+  }
+}
