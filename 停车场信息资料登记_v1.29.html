@@ -575,7 +575,7 @@
   body.locked-mode .gate-del,
   body.locked-mode .pc-del,
   body.locked-mode .dev-machine-del,
-  body.locked-mode .btn-sm:not(.lot-lock-btn):not(#ovOpenBtn),
+  body.locked-mode .card .btn-sm,
   body.locked-mode #lotName,
   body.locked-mode #lotCompany {
     pointer-events: none !important;
@@ -1311,7 +1311,7 @@
   <div class="brand-company">金达资讯科技技术有限公司</div>
   <div class="brand-title">停车场信息资料登记系统</div>
   <div class="brand-subtitle">多停车场管理 &middot; 收费处 &amp; 出入口信息采集</div>
-  <div class="brand-version">v1.26</div>
+  <div class="brand-version">v1.29</div>
 </div>
 
 <!-- 用户信息栏 -->
@@ -1349,6 +1349,7 @@
     <button class="btn-sm btn-sm-primary" onclick="addLot()">+ 新增</button>
     <button class="btn-sm btn-sm-outline" onclick="cloneLot()" title="复制当前停车场">&#128203; 复制</button>
     <button class="btn-sm btn-sm-primary" id="ovOpenBtn" onclick="openOverview()" style="background-color:#0066cc;">&#128202; 信息总览</button>
+    <button class="btn-sm btn-sm-outline" id="permMgmtBtn" onclick="openPermMgmt()" style="display:none;" title="管理查看权限">&#128101; 权限</button>
   </div>
 
   <!-- 停车场名称 -->
@@ -1657,8 +1658,9 @@
     else { roleLabel = '查看者'; badge.className += ' role-viewer'; }
     badge.textContent = roleLabel;
 
-    // 超级管理员可见用户管理按钮
+    // 超级管理员可见用户管理按钮；超管和编辑者可见权限管理按钮
     document.getElementById('userMgmtBtn').style.display = (currentUser.role === 'super_admin') ? '' : 'none';
+    document.getElementById('permMgmtBtn').style.display = (currentUser.role === 'super_admin' || currentUser.role === 'editor') ? '' : 'none';
 
     applyPermissions();
   }
@@ -1795,6 +1797,13 @@
     currentUser = null;
     saveAuth();
     showLoginOverlay();
+    // 清空登录表单，允许换号登录
+    document.getElementById('loginUsername').value = '';
+    document.getElementById('loginPassword').value = '';
+    var loginErr = document.getElementById('loginError');
+    if (loginErr) loginErr.classList.remove('show');
+    var loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '登 录'; }
     // 重置 UI
     document.querySelectorAll('input, select, textarea, button.stepper-btn').forEach(function(el) {
       el.disabled = false;
@@ -1933,6 +1942,86 @@
       errorEl.classList.add('show');
     }
   };
+
+  // ========== 查看权限管理 ==========
+  window.openPermMgmt = function() {
+    if (!state.currentLotId) { showToast('请先选择一个停车场', 'error'); return; }
+    var lot = state.lots[state.currentLotId];
+    if (!lot) return;
+    document.getElementById('permMgmtLotName').textContent = lot.name || '未命名';
+    loadPermMgmtList();
+    document.getElementById('permMgmtOverlay').classList.add('show');
+  };
+
+  window.closePermMgmt = function() {
+    document.getElementById('permMgmtOverlay').classList.remove('show');
+  };
+
+  function loadPermMgmtList() {
+    var lot = state.lots[state.currentLotId];
+    var pu = (lot && lot.data && lot.data._permitted_users) || [];
+    // 从云端加载所有查看者
+    fetch(SUPABASE_URL + '/rest/v1/profiles?role=eq.viewer&select=username', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    }).then(function(r) { return r.json(); }).then(function(users) {
+      var h = '';
+      if (users.length === 0) {
+        h = '<p style="color:#94a3b8;font-size:0.82rem;">暂无查看者用户。请先在用户管理中添加查看者。</p>';
+      } else {
+        // 批量操作栏
+        h += '<div style="margin-bottom:10px;display:flex;gap:8px;">' +
+          '<button type="button" class="btn btn-sm" style="font-size:0.75rem;padding:4px 12px;background:#e0e7ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:4px;" onclick="toggleAllPerm(true)">全选</button>' +
+          '<button type="button" class="btn btn-sm" style="font-size:0.75rem;padding:4px 12px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;" onclick="toggleAllPerm(false)">全不选</button>' +
+          '</div>';
+        for (var i = 0; i < users.length; i++) {
+          var uname = users[i].username;
+          var checked = pu.indexOf(uname) !== -1 ? ' checked' : '';
+          h += '<label style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:0.9rem;">' +
+            '<input type="checkbox" class="perm-checkbox" value="' + esc(uname) + '"' + checked + ' onchange="togglePermUser(this)" style="margin-right:10px;">' +
+            esc(uname) + '</label>';
+        }
+      }
+      document.getElementById('permMgmtList').innerHTML = h;
+    }).catch(function() {
+      document.getElementById('permMgmtList').innerHTML = '<p style="color:#ef4444;font-size:0.82rem;">加载用户列表失败，请检查网络</p>';
+    });
+  }
+
+  window.togglePermUser = function(cb) {
+    var lot = state.lots[state.currentLotId];
+    if (!lot) return;
+    if (!lot.data._permitted_users) lot.data._permitted_users = [];
+    var idx = lot.data._permitted_users.indexOf(cb.value);
+    if (cb.checked && idx === -1) {
+      lot.data._permitted_users.push(cb.value);
+    } else if (!cb.checked && idx !== -1) {
+      lot.data._permitted_users.splice(idx, 1);
+    }
+    saveState();
+  };
+
+  window.toggleAllPerm = function(selectAll) {
+    var lot = state.lots[state.currentLotId];
+    if (!lot) return;
+    var cbs = document.querySelectorAll('#permMgmtList .perm-checkbox');
+    if (!lot.data._permitted_users) lot.data._permitted_users = [];
+    for (var i = 0; i < cbs.length; i++) {
+      var cb = cbs[i];
+      var idx = lot.data._permitted_users.indexOf(cb.value);
+      cb.checked = selectAll;
+      if (selectAll && idx === -1) {
+        lot.data._permitted_users.push(cb.value);
+      } else if (!selectAll && idx !== -1) {
+        lot.data._permitted_users.splice(idx, 1);
+      }
+    }
+    if (!selectAll) lot.data._permitted_users = [];
+    saveState();
+  };
+
+  document.getElementById('permMgmtOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closePermMgmt();
+  });
 
   // HTML 转义
   function escHTML(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#039;'); }
@@ -2125,6 +2214,15 @@
       saveState();
     } else if (!state.currentLotId) {
       state.currentLotId = state.lotIds[0];
+    }
+    // 查看者权限：选择第一个有权限的停车场
+    if (currentUser && currentUser.role === 'viewer') {
+      var found = null;
+      for (var vi = 0; vi < state.lotIds.length; vi++) {
+        var vlot = state.lots[state.lotIds[vi]];
+        if (vlot && canViewLot(vlot)) { found = state.lotIds[vi]; break; }
+      }
+      state.currentLotId = found;
     }
     if (state.currentLotId) { loadLot(state.currentLotId); } else { clearForm(); }
     updateProgress();
@@ -3188,15 +3286,32 @@
 
   // ========== 停车场管理 ==========
 
+  // 检查当前用户是否有权查看某停车场
+  function canViewLot(lot) {
+    if (!currentUser) return true;
+    var role = currentUser.role;
+    // 超级管理员和管理员可查看所有
+    if (role === 'super_admin' || role === 'editor') return true;
+    // 查看者：必须在 permitted_users 列表中
+    if (role === 'viewer') {
+      var pu = (lot.data && lot.data._permitted_users) || [];
+      return pu.indexOf(currentUser.username) !== -1;
+    }
+    return true;
+  }
+
   function renderDropdown(filter) {
     var q = (filter || '').toLowerCase();
     var h = '';
     for (var i = 0; i < state.lotIds.length; i++) {
       var id = state.lotIds[i];
       var lot = state.lots[id];
-      var name = (lot && lot.name) || ('停车场 ' + (i + 1));
-      var company = (lot && lot.company) || '';
-      var locked = lot && lot.locked;
+      if (!lot) continue;
+      // 查看者权限过滤
+      if (!canViewLot(lot)) continue;
+      var name = lot.name || ('停车场 ' + (i + 1));
+      var company = lot.company || '';
+      var locked = lot.locked;
       if (q && name.toLowerCase().indexOf(q) === -1 && company.toLowerCase().indexOf(q) === -1) continue;
       var cls = (id === state.currentLotId) ? ' current' : '';
       var companyHtml = company ? '<span class="lot-dd-company">' + esc(company) + '</span>' : '';
@@ -3283,6 +3398,13 @@
 
   window.switchLot = function(id) {
     if (id === state.currentLotId) { lotSearchDropdownEl.classList.remove('show'); lotSearchEl.value = ''; return; }
+    var lot = state.lots[id];
+    if (lot && !canViewLot(lot)) {
+      showToast('您没有权限查看该停车场', 'error');
+      lotSearchDropdownEl.classList.remove('show');
+      lotSearchEl.value = '';
+      return;
+    }
     saveCurrentSilent();
     state.currentLotId = id;
     saveState();
@@ -3361,6 +3483,12 @@
   function loadLot(id) {
     var lot = state.lots[id];
     if (!lot) { clearForm(); lotNameEl.value = ''; lotCompanyEl.value = ''; updateProgress(); document.body.classList.remove('locked-mode'); return; }
+    // 权限检查：查看者不能加载无权限的停车场
+    if (!canViewLot(lot)) {
+      clearForm(); lotNameEl.value = ''; lotCompanyEl.value = ''; updateProgress(); document.body.classList.remove('locked-mode');
+      showToast('您没有权限查看该停车场', 'error');
+      return;
+    }
     lotNameEl.value = lot.name || '';
     lotCompanyEl.value = lot.company || '';
     writeForm(lot.data || {}, lot.brandMap || {});
@@ -3375,7 +3503,12 @@
     if (!lot) return;
     lot.name = lotNameEl.value.trim() || ('停车场 ' + (state.lotIds.indexOf(state.currentLotId) + 1));
     lot.company = lotCompanyEl.value.trim();
-    lot.data = readForm();
+    var formData = readForm();
+    // 保留 lot.data 上表单之外的元数据字段（如 _permitted_users）
+    if (lot.data) {
+      formData._permitted_users = lot.data._permitted_users;
+    }
+    lot.data = formData;
     var bm = {};
     var items = gateListEl.querySelectorAll('.gate-item');
     items.forEach(function(el, idx) {
@@ -3406,6 +3539,15 @@
     if (!state.currentLotId) return;
     var lot = state.lots[state.currentLotId];
     if (!lot) return;
+    // 权限检查：仅超级管理员可解锁，编辑者仅可锁定
+    if (lot.locked && currentUser && currentUser.role !== 'super_admin') {
+      showToast('停车场已锁定，仅超级管理员可解锁', 'error');
+      return;
+    }
+    if (!lot.locked && currentUser && currentUser.role === 'viewer') {
+      showToast('查看者无权限锁定停车场', 'error');
+      return;
+    }
     lot.locked = !lot.locked;
     saveState();
     applyLockState(!!lot.locked);
@@ -4969,6 +5111,25 @@
 </div>
 
 <div class="page-footer">光仔 制作</div>
+
+<!-- 权限管理弹窗 -->
+<div class="user-mgmt-overlay" id="permMgmtOverlay">
+  <div class="user-mgmt-panel" style="width:420px;">
+    <div class="user-mgmt-header">
+      <h3>&#128101; 查看权限管理</h3>
+      <button class="user-mgmt-close" onclick="closePermMgmt()">&#10005;</button>
+    </div>
+    <div class="user-mgmt-body" style="padding:16px 20px;">
+      <p style="font-size:0.82rem;color:#64748b;margin-bottom:12px;">
+        管理「<strong id="permMgmtLotName">-</strong>」的查看权限。勾选的用户可查看该停车场。
+      </p>
+      <div id="permMgmtList"></div>
+    </div>
+    <div class="user-mgmt-footer">
+      <button class="btn btn-sm btn-cancel" onclick="closePermMgmt()">关闭</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
