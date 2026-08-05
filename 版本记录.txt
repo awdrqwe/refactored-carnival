@@ -1,6 +1,9 @@
 停车场信息资料登记 - 版本记录
 ==============================
 
+v1.37 (2026-08-05)
+- 关键修复：cloudDoSync 写入 Supabase 始终失败的根因——upsert 中包含了 parking_data 表不存在的 permitted_users 列，导致 400 错误，所有同步静默失败。permitted_users 改为存入 data JSON 列内，cloudLoadAll 同步简化。新增同步失败 toast 提示。
+
 v1.36 (2026-08-05)
 - 修复：新增停车场、删除停车场、锁定/解锁、公司改名未立即同步云端——addLot/cloneLot/deleteLot/toggleLock/renameCompany 全部改为立即 cloudDoSync，避免退出登录前云端未更新
 
