@@ -1,6 +1,9 @@
 停车场信息资料登记 - 版本记录
 ==============================
 
+v1.36 (2026-08-05)
+- 修复：新增停车场、删除停车场、锁定/解锁、公司改名未立即同步云端——addLot/cloneLot/deleteLot/toggleLock/renameCompany 全部改为立即 cloudDoSync，避免退出登录前云端未更新
+
 v1.35 (2026-08-04)
 - 修复：viewer 用户在已锁定的停车场页面下无法点击退出登录按钮——CSS 优先级冲突导致 user-bar 内 .btn-sm 的 pointer-events:auto 被覆盖
 
